@@ -1,0 +1,42 @@
+{
+  "name": "palettez",
+  "version": "0.0.1",
+  "description": "Palettez",
+  "keywords": [
+    "theming"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/universse/palettez.git"
+  },
+  "license": "MIT",
+  "author": "Si Phuoc <phuoc317049@gmail.com>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "jsdelivr": "./dist/index.global.js",
+  "unpkg": "./dist/index.global.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "@commitlint/cli": "19.3.0",
+    "@commitlint/config-conventional": "19.2.2",
+    "tsup": "8.2.4",
+    "typescript": "5.5.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

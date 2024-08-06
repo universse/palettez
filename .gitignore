@@ -1,0 +1,24 @@
+# Dependency directories
+node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log
+
+# Builds
+dist*
+
+# Personal
+ideas.md
+
+# Tooling
+.vscode
+.eslintcache
+.rollup.cache
+*.tsbuildinfo
+
+# Misc
+.DS_Store
+*.pem
