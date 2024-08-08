@@ -1,15 +1,21 @@
 import * as React from 'react'
 
+declare global {
+	interface Window {
+		palettez: typeof import('.')
+	}
+}
+
 export function usePalettez(key = 'palettez') {
 	const {
 		themesAndOptions,
 		getThemes,
 		getResolvedThemes,
 		setThemes,
-		restorePersistedThemes,
-		subscribe,
+		restore,
 		sync,
-		// @ts-expect-error TODO
+		clear,
+		subscribe,
 	} = window.palettez.read(key)
 
 	const themes = React.useSyncExternalStore(
@@ -23,8 +29,9 @@ export function usePalettez(key = 'palettez') {
 		themes,
 		getResolvedThemes,
 		setThemes,
-		restorePersistedThemes,
-		subscribe,
+		restore,
 		sync,
+		clear,
+		subscribe,
 	}
 }

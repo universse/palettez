@@ -3,36 +3,75 @@ import { name as packageName } from '../package.json'
 type Themes<T> = { [K in keyof T]: keyof T[K] }
 type Listener<T> = (updatedThemes: Themes<T>, resolvedThemes: Themes<T>) => void
 
-export type Config = Record<
-	string,
-	{
-		label: string
-		options: Record<
-			string,
-			{
-				value: string
-				isDefault?: boolean
-				media?: { query: string; ifMatch: string; ifNotMatch: string }
-			}
-		>
-	}
->
-
-type Options = { key: string }
-
-const DEFAULT_OPTIONS: Options = {
-	key: packageName,
+type Storage = {
+	getItem: (key: string) => string | null | Promise<string | null>
+	setItem: (key: string, value: string) => unknown | Promise<unknown>
+	removeItem: (key: string) => unknown | Promise<unknown>
+	watch?: (cb: (key: string | null, value: any) => void) => () => void
 }
 
-class ThemeManager<T extends Config> {
+type ThemeOption = {
+	value: string
+	isDefault?: boolean
+	media?: { query: string; ifMatch: string; ifNotMatch: string }
+}
+
+export type Options = {
+	key?: string
+	config: Record<
+		string,
+		{
+			label: string
+			options: Record<string, ThemeOption>
+		}
+	>
+	getStorage?: () => Storage
+}
+
+const isClient =
+	typeof window !== 'undefined' &&
+	typeof window.document !== 'undefined' &&
+	typeof window.document.createElement !== 'undefined'
+
+const DEFAULT_OPTIONS = {
+	key: packageName,
+	getStorage: (): Storage => {
+		return {
+			getItem: window.localStorage.getItem,
+
+			setItem: window.localStorage.setItem,
+
+			removeItem: window.localStorage.removeItem,
+
+			watch: (cb) => {
+				const controller = new AbortController()
+
+				window.addEventListener(
+					'storage',
+					(e) => {
+						const persistedThemes = JSON.parse(e.newValue || 'null')
+						cb(e.key, persistedThemes)
+					},
+					{ signal: controller.signal },
+				)
+
+				return () => {
+					controller.abort()
+				}
+			},
+		}
+	},
+}
+
+class ThemeManager<T extends Options['config']> {
 	themesAndOptions: Array<{
 		key: string
 		label: string
 		options: Array<{ key: string; value: string }>
 	}>
 
-	#config: T
-	#options: Options
+	#options: Required<Options>
+	#storage: Storage
 
 	#defaultThemes: Themes<T>
 	#currentThemes: Themes<T>
@@ -40,7 +79,12 @@ class ThemeManager<T extends Config> {
 
 	#listeners: Set<Listener<T>> = new Set<Listener<T>>()
 
-	constructor(config: T, options: Options = DEFAULT_OPTIONS) {
+	constructor(options: Options) {
+		this.#options = { ...DEFAULT_OPTIONS, ...options }
+		this.#storage = this.#options.getStorage()
+
+		const { config } = this.#options
+
 		this.themesAndOptions = Object.entries(config).reduce<
 			Array<{
 				key: string
@@ -61,10 +105,6 @@ class ThemeManager<T extends Config> {
 
 			return acc
 		}, [])
-
-		this.#config = config
-
-		this.#options = options
 
 		this.#defaultThemes = Object.fromEntries(
 			Object.entries(config).map(([theme, themeConfig]) => {
@@ -92,31 +132,57 @@ class ThemeManager<T extends Config> {
 		return this.#resolveThemes()
 	}
 
-	setThemes = (themes: Partial<Themes<T>>): void => {
+	setThemes = async (themes: Partial<Themes<T>>): Promise<void> => {
 		this.#currentThemes = { ...this.#currentThemes, ...themes }
 
 		const resolvedThemes = this.#resolveThemes()
 
-		this.#applyThemes(resolvedThemes)
+		this.#notify(resolvedThemes)
 
-		window.localStorage.setItem(
+		await this.#storage.setItem(
 			this.#options.key,
 			JSON.stringify(this.#currentThemes),
 		)
-
-		this.#notify(resolvedThemes)
 	}
 
-	restorePersistedThemes = (): void => {
+	restore = async (): Promise<void> => {
 		const persistedThemes = JSON.parse(
-			window.localStorage.getItem(this.#options.key) || 'null',
+			(await this.#storage.getItem(this.#options.key)) || 'null',
 		)
 
 		this.#currentThemes = persistedThemes || this.#defaultThemes
 
 		const resolvedThemes = this.#resolveThemes()
 
-		this.#applyThemes(resolvedThemes)
+		this.#notify(resolvedThemes)
+	}
+
+	sync = (): (() => void) => {
+		if (!this.#storage.watch) {
+			throw new Error(
+				`[${packageName}] No watch method was provided for storage.`,
+			)
+		}
+
+		return this.#storage.watch((key, persistedThemes) => {
+			if (key !== this.#options.key) return
+
+			this.#currentThemes = persistedThemes || this.#defaultThemes
+
+			const resolvedThemes = this.#resolveThemes()
+
+			this.#notify(resolvedThemes)
+		})
+	}
+
+	clear = async (): Promise<void> => {
+		this.#currentThemes = { ...this.#defaultThemes }
+
+		const resolvedThemes = this.#resolveThemes()
+
+		this.#notify(resolvedThemes)
+
+		await this.#storage.removeItem(this.#options.key)
 	}
 
 	subscribe: (callback: Listener<T>) => () => void = (callback) => {
@@ -127,68 +193,44 @@ class ThemeManager<T extends Config> {
 		}
 	}
 
-	sync = (): (() => void) => {
-		const controller = new AbortController()
-
-		window.addEventListener(
-			'storage',
-			(e) => {
-				if (e.key !== this.#options.key) return
-
-				const persistedThemes = JSON.parse(e.newValue || 'null')
-
-				this.#currentThemes = persistedThemes || this.#defaultThemes
-
-				const resolvedThemes = this.#resolveThemes()
-
-				this.#applyThemes(resolvedThemes)
-
-				this.#notify(resolvedThemes)
-			},
-			{ signal: controller.signal },
-		)
-
-		return () => {
-			controller.abort()
-		}
-	}
-
 	#resolveThemes = (): Themes<T> => {
 		// @ts-expect-error TODO
 		return Object.fromEntries(
 			Object.entries(this.#currentThemes).map(([theme, optionKey]) => {
-				const option = this.#config[theme]!.options[optionKey]!
+				const option = this.#options.config[theme]!.options[optionKey]!
 
-				const resolved = option.media
-					? this.#resolveOption({
-							theme,
-							// @ts-expect-error TODO
-							option: { key: optionKey, ...option },
-						})
-					: optionKey
+				const resolved = this.#resolveThemeOption({
+					theme,
+					option: { key: optionKey, ...option },
+				})
 
 				return [theme, resolved]
 			}),
 		)
 	}
 
-	#applyThemes = (themes: Themes<T>): void => {
-		Object.entries(themes).forEach(([theme, optionKey]) => {
-			document.documentElement.dataset[theme] = optionKey
-		})
-	}
+	// #applyThemes = (themes: Themes<T>): void => {
+	// 	Object.entries(themes).forEach(([theme, optionKey]) => {
+	// 		document.documentElement.dataset[theme] = optionKey
+	// 	})
+	// }
 
-	#resolveOption = ({
+	#resolveThemeOption = ({
 		theme,
 		option,
 	}: {
 		theme: string
-		option: {
-			key: string
-			value: string
-			media: { query: string; ifMatch: string; ifNotMatch: string }
-		}
+		option: ThemeOption & { key: string }
 	}): string => {
+		if (!option.media) return option.key
+
+		if (!isClient) {
+			console.warn(
+				`[${packageName}] Option with key "media" cannot be resolved in server environment.`,
+			)
+			return option.key
+		}
+
 		if (!this.#resolvedOptionsByTheme[theme]![option.key]) {
 			const {
 				media: { query, ifMatch, ifNotMatch },
@@ -208,8 +250,6 @@ class ThemeManager<T extends Config> {
 				if (this.#currentThemes[theme] === option.key) {
 					const resolvedThemes = this.#resolveThemes()
 
-					this.#applyThemes(resolvedThemes)
-
 					this.#notify(resolvedThemes)
 				}
 			})
@@ -225,19 +265,19 @@ class ThemeManager<T extends Config> {
 	}
 }
 
-const registry = new Map<string, ThemeManager<Config>>()
+const registry = new Map<string, ThemeManager<Options['config']>>()
 
-export function create(config: Config, options: Options = DEFAULT_OPTIONS) {
-	const themeManager = new ThemeManager(config, options)
-	registry.set(options.key, themeManager)
+export function create(options: Options) {
+	const themeManager = new ThemeManager(options)
+	registry.set(options.key || DEFAULT_OPTIONS.key, themeManager)
 	return themeManager
 }
 
-export function read(key: string = DEFAULT_OPTIONS.key) {
+export function read(key: string = packageName) {
 	const themeManager = registry.get(key)
 	if (!themeManager) {
 		throw new Error(
-			`[palettez] Theme manager with key '${key}' could not be found. Please run \`create\` with key '${key}' first.`,
+			`[${packageName}] Theme manager with key '${key}' could not be found. Please run \`create\` with key '${key}' first.`,
 		)
 	}
 	return themeManager
