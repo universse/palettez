@@ -225,19 +225,14 @@ class Manager<T extends Config> {
   };
 }
 
-function createRegistry() {
-  const registry = new Map<string, Manager<Config>>();
+const registry = new Map<string, Manager<Config>>();
 
-  return {
-    create: (config: Config, options: Options = DEFAULT_OPTIONS) => {
-      const manager = new Manager(config, options);
-      registry.set(options.storageKey, manager);
-      return manager;
-    },
-    read: (key: string = DEFAULT_OPTIONS.storageKey) => {
-      return registry.get(key);
-    },
-  };
+export function create(config: Config, options: Options = DEFAULT_OPTIONS) {
+  const manager = new Manager(config, options);
+  registry.set(options.storageKey, manager);
+  return manager;
 }
 
-export default createRegistry();
+export function read(key: string = DEFAULT_OPTIONS.storageKey) {
+  return registry.get(key);
+}
