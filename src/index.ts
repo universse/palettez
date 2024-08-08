@@ -37,11 +37,12 @@ const DEFAULT_OPTIONS = {
 	key: packageName,
 	getStorage: (): Storage => {
 		return {
-			getItem: window.localStorage.getItem,
+			getItem: (key: string) => window.localStorage.getItem(key),
 
-			setItem: window.localStorage.setItem,
+			setItem: (key: string, value: string) =>
+				window.localStorage.setItem(key, value),
 
-			removeItem: window.localStorage.removeItem,
+			removeItem: (key: string) => window.localStorage.removeItem(key),
 
 			watch: (cb) => {
 				const controller = new AbortController()
