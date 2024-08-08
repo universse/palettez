@@ -1,9 +1,9 @@
-const DEFAULT_LOCAL_STORAGE_KEY = "__palettez";
+import { name as packageName } from "../package.json";
 
 type Modes<T> = { [K in keyof T]: keyof T[K] };
 type Listener<T> = (updatedModes: Modes<T>, resolvedModes: Modes<T>) => void;
 
-export type ThemeConfig = Record<
+export type Config = Record<
   string,
   {
     label: string;
@@ -18,12 +18,21 @@ export type ThemeConfig = Record<
   }
 >;
 
-class Theme<T extends ThemeConfig> {
+type Options = { storageKey: string };
+
+const DEFAULT_OPTIONS: Options = {
+  storageKey: packageName,
+};
+
+class Manager<T extends Config> {
   modesAndOptions: Array<{
     key: string;
     label: string;
     options: Array<{ key: string; value: string }>;
   }>;
+
+  #config: T;
+  #options: Options;
 
   #defaultModes: Modes<T>;
   #currentModes: Modes<T>;
@@ -31,12 +40,7 @@ class Theme<T extends ThemeConfig> {
 
   #listeners: Set<Listener<T>> = new Set<Listener<T>>();
 
-  constructor(
-    private config: T,
-    private options: { storageKey: string } = {
-      storageKey: DEFAULT_LOCAL_STORAGE_KEY,
-    }
-  ) {
+  constructor(config: T, options: Options = DEFAULT_OPTIONS) {
     this.modesAndOptions = Object.entries(config).reduce<
       Array<{
         key: string;
@@ -58,6 +62,10 @@ class Theme<T extends ThemeConfig> {
       return acc;
     }, []);
 
+    this.#config = config;
+
+    this.#options = options;
+
     this.#defaultModes = Object.fromEntries(
       Object.entries(config).map(([mode, modeConfig]) => {
         const entries = Object.entries(modeConfig.options);
@@ -76,15 +84,15 @@ class Theme<T extends ThemeConfig> {
     );
   }
 
-  getModes(): Modes<T> {
+  getModes = (): Modes<T> => {
     return this.#currentModes;
-  }
+  };
 
-  getResolvedModes(): Modes<T> {
+  getResolvedModes = (): Modes<T> => {
     return this.#resolveModes();
-  }
+  };
 
-  setMode(newMode: Partial<Modes<T>>): void {
+  setModes = (newMode: Partial<Modes<T>>): void => {
     this.#currentModes = { ...this.#currentModes, ...newMode };
 
     const resolvedModes = this.#resolveModes();
@@ -92,16 +100,16 @@ class Theme<T extends ThemeConfig> {
     this.#applyModes(resolvedModes);
 
     window.localStorage.setItem(
-      this.options.storageKey,
+      this.#options.storageKey,
       JSON.stringify(this.#currentModes)
     );
 
     this.#notify(resolvedModes);
-  }
+  };
 
-  restorePersistedModes(): void {
+  restorePersistedModes = (): void => {
     const persistedModes = JSON.parse(
-      window.localStorage.getItem(this.options.storageKey) || "null"
+      window.localStorage.getItem(this.#options.storageKey) || "null"
     );
 
     this.#currentModes = persistedModes || this.#defaultModes;
@@ -109,43 +117,47 @@ class Theme<T extends ThemeConfig> {
     const resolvedModes = this.#resolveModes();
 
     this.#applyModes(resolvedModes);
-  }
+  };
 
-  subscribe(callback: Listener<T>): () => void {
+  subscribe: (callback: Listener<T>) => () => void = (callback) => {
     this.#listeners.add(callback);
 
     return () => {
       this.#listeners.delete(callback);
     };
-  }
+  };
 
-  sync(): () => void {
-    const handler = (e: StorageEvent) => {
-      if (e.key !== this.options.storageKey) return;
+  sync = (): (() => void) => {
+    const controller = new AbortController();
 
-      const persistedModes = JSON.parse(e.newValue || "null");
+    window.addEventListener(
+      "storage",
+      (e) => {
+        if (e.key !== this.#options.storageKey) return;
 
-      this.#currentModes = persistedModes || this.#defaultModes;
+        const persistedModes = JSON.parse(e.newValue || "null");
 
-      const resolvedModes = this.#resolveModes();
+        this.#currentModes = persistedModes || this.#defaultModes;
 
-      this.#applyModes(resolvedModes);
+        const resolvedModes = this.#resolveModes();
 
-      this.#notify(resolvedModes);
-    };
+        this.#applyModes(resolvedModes);
 
-    window.addEventListener("storage", handler);
+        this.#notify(resolvedModes);
+      },
+      { signal: controller.signal }
+    );
 
     return () => {
-      window.removeEventListener("storage", handler);
+      controller.abort();
     };
-  }
+  };
 
-  #resolveModes(): Modes<T> {
+  #resolveModes = (): Modes<T> => {
     // @ts-expect-error TODO
     return Object.fromEntries(
       Object.entries(this.#currentModes).map(([mode, optionKey]) => {
-        const option = this.config[mode]!.options[optionKey]!;
+        const option = this.#config[mode]!.options[optionKey]!;
 
         const resolved = option.media
           ? this.#resolveOption({
@@ -158,15 +170,15 @@ class Theme<T extends ThemeConfig> {
         return [mode, resolved];
       })
     );
-  }
+  };
 
-  #applyModes(modes: Modes<T>): void {
+  #applyModes = (modes: Modes<T>): void => {
     Object.entries(modes).forEach(([mode, optionKey]) => {
       document.documentElement.dataset[mode] = optionKey;
     });
-  }
+  };
 
-  #resolveOption({
+  #resolveOption = ({
     mode,
     option,
   }: {
@@ -176,7 +188,7 @@ class Theme<T extends ThemeConfig> {
       value: string;
       media: { query: string; ifMatch: string; ifNotMatch: string };
     };
-  }): string {
+  }): string => {
     if (!this.#resolvedOptionsByMode[mode]![option.key]) {
       const {
         media: { query, ifMatch, ifNotMatch },
@@ -204,15 +216,28 @@ class Theme<T extends ThemeConfig> {
     }
 
     return this.#resolvedOptionsByMode[mode]![option.key]!;
-  }
+  };
 
-  #notify(resolvedModes: Modes<T>): void {
+  #notify = (resolvedModes: Modes<T>): void => {
     this.#listeners.forEach((listener) =>
       listener(this.#currentModes, resolvedModes)
     );
-  }
+  };
 }
 
-export function create(config: ThemeConfig) {
-  return new Theme(config);
+function createRegistry() {
+  const registry = new Map<string, Manager<Config>>();
+
+  return {
+    create: (config: Config, options: Options = DEFAULT_OPTIONS) => {
+      const manager = new Manager(config, options);
+      registry.set(options.storageKey, manager);
+      return manager;
+    },
+    read: (key: string = DEFAULT_OPTIONS.storageKey) => {
+      return registry.get(key);
+    },
+  };
 }
+
+export default createRegistry();
