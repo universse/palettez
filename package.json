@@ -1,6 +1,6 @@
 {
 	"name": "palettez",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"description": "Palettez",
 	"keywords": ["theming"],
 	"repository": {
@@ -32,8 +32,8 @@
 	},
 	"jsdelivr": "./dist/palettez.min.js",
 	"unpkg": "./dist/palettez.min.js",
-	"types": "./dist/index.d.ts",
-	"files": ["dist", "palettez.min.txt.d.ts"],
+	"types": "./global.d.ts",
+	"files": ["dist", "global.d.ts", "palettez.min.txt.d.ts"],
 	"scripts": {
 		"build": "tsup"
 	},

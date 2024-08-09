@@ -219,12 +219,6 @@ class ThemeManager<T extends Options['config']> {
 		)
 	}
 
-	// #applyThemes = (themes: Themes<T>): void => {
-	// 	Object.entries(themes).forEach(([theme, optionKey]) => {
-	// 		document.documentElement.dataset[theme] = optionKey
-	// 	})
-	// }
-
 	#resolveThemeOption = ({
 		theme,
 		option,
@@ -277,18 +271,18 @@ class ThemeManager<T extends Options['config']> {
 
 const registry = new Map<string, ThemeManager<Options['config']>>()
 
-export function create(options: Options) {
-	const themeManager = new ThemeManager(options)
+export function create<T extends Options>(options: T) {
+	const themeManager = new ThemeManager<T['config']>(options)
 	registry.set(options.key || DEFAULT_OPTIONS.key, themeManager)
 	return themeManager
 }
 
-export function read(key: string = packageName) {
+export function read<T extends Options>(key: string = packageName) {
 	const themeManager = registry.get(key)
 	if (!themeManager) {
 		throw new Error(
 			`[${packageName}] Theme manager with key '${key}' could not be found. Please run \`create\` with key '${key}' first.`,
 		)
 	}
-	return themeManager
+	return themeManager as ThemeManager<T['config']>
 }

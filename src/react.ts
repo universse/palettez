@@ -1,12 +1,7 @@
 import * as React from 'react'
+import type { Options } from '.'
 
-declare global {
-	interface Window {
-		palettez: typeof import('.')
-	}
-}
-
-export function usePalettez(key = 'palettez') {
+export function usePalettez<T extends Options>(key = 'palettez') {
 	const {
 		themesAndOptions,
 		getThemes,
@@ -16,7 +11,7 @@ export function usePalettez(key = 'palettez') {
 		sync,
 		clear,
 		subscribe,
-	} = window.palettez.read(key)
+	} = window.palettez.read<T>(key)
 
 	const themes = React.useSyncExternalStore(
 		React.useCallback((callback) => subscribe(callback), [key]),
