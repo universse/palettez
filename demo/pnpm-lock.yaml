@@ -13,7 +13,7 @@ importers:
         version: 4.13.2
       palettez:
         specifier: '*'
-        version: 0.0.9(react@18.3.1)
+        version: 0.0.10(react@18.3.1)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -1341,8 +1341,8 @@ packages:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
 
-  palettez@0.0.9:
-    resolution: {integrity: sha512-OrCh+VVkR7oTC+A2CvGnR4NG5NMPoqCMzo7GryPNWioZ0wP6BgAkOItrUESRFsRSoWIH50qBnEx3H7tCszFVTQ==}
+  palettez@0.0.10:
+    resolution: {integrity: sha512-wEgDcFJd2uqTa/vrnzGjdI8c4PEHF4XRQtM9UfyCNcTbP//vOdZKEn1FJpPCssKSQGi9wjNPAwfZ61D91P0DLA==}
     peerDependencies:
       react: ^18.0.0
     peerDependenciesMeta:
@@ -3246,7 +3246,7 @@ snapshots:
 
   p-try@2.2.0: {}
 
-  palettez@0.0.9(react@18.3.1):
+  palettez@0.0.10(react@18.3.1):
     optionalDependencies:
       react: 18.3.1
 
