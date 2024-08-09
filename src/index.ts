@@ -1,13 +1,23 @@
 import { name as packageName } from '../package.json'
 
-type Themes<T> = { [K in keyof T]: keyof T[K] }
-type Listener<T> = (updatedThemes: Themes<T>, resolvedThemes: Themes<T>) => void
+type ThemeConfig = Record<
+	string,
+	{
+		label: string
+		options: Record<string, ThemeOption>
+	}
+>
+type Themes<T extends ThemeConfig> = { [K in keyof T]: keyof T[K]['options'] }
+type Listener<T extends ThemeConfig> = (
+	updatedThemes: Themes<T>,
+	resolvedThemes: Themes<T>,
+) => void
 
-type Storage = {
-	getItem: (key: string) => string | null | Promise<string | null>
-	setItem: (key: string, value: string) => unknown | Promise<unknown>
-	removeItem: (key: string) => unknown | Promise<unknown>
-	watch?: (cb: (key: string | null, value: any) => void) => () => void
+export type Storage = {
+	getItem: (key: string) => object | Promise<object>
+	setItem: (key: string, value: object) => void | Promise<void>
+	removeItem: (key: string) => void | Promise<void>
+	watch?: (cb: (key: string | null, value: object) => void) => () => void
 }
 
 type ThemeOption = {
@@ -18,13 +28,7 @@ type ThemeOption = {
 
 export type Options = {
 	key?: string
-	config: Record<
-		string,
-		{
-			label: string
-			options: Record<string, ThemeOption>
-		}
-	>
+	config: ThemeConfig
 	getStorage?: () => Storage
 }
 
@@ -37,12 +41,21 @@ const DEFAULT_OPTIONS = {
 	key: packageName,
 	getStorage: (): Storage => {
 		return {
-			getItem: (key: string) => window.localStorage.getItem(key),
+			getItem: (key: string) => {
+				try {
+					return JSON.parse(window.localStorage.getItem(key) || 'null')
+				} catch {
+					return null
+				}
+			},
 
-			setItem: (key: string, value: string) =>
-				window.localStorage.setItem(key, value),
+			setItem: (key: string, value: object) => {
+				window.localStorage.setItem(key, JSON.stringify(value))
+			},
 
-			removeItem: (key: string) => window.localStorage.removeItem(key),
+			removeItem: (key: string) => {
+				window.localStorage.removeItem(key)
+			},
 
 			watch: (cb) => {
 				const controller = new AbortController()
@@ -140,18 +153,13 @@ class ThemeManager<T extends Options['config']> {
 
 		this.#notify(resolvedThemes)
 
-		await this.#storage.setItem(
-			this.#options.key,
-			JSON.stringify(this.#currentThemes),
-		)
+		await this.#storage.setItem(this.#options.key, this.#currentThemes)
 	}
 
 	restore = async (): Promise<void> => {
-		const persistedThemes = JSON.parse(
-			(await this.#storage.getItem(this.#options.key)) || 'null',
-		)
+		const persistedThemes = await this.#storage.getItem(this.#options.key)
 
-		this.#currentThemes = persistedThemes || this.#defaultThemes
+		this.#currentThemes = (persistedThemes as Themes<T>) || this.#defaultThemes
 
 		const resolvedThemes = this.#resolveThemes()
 
@@ -168,7 +176,8 @@ class ThemeManager<T extends Options['config']> {
 		return this.#storage.watch((key, persistedThemes) => {
 			if (key !== this.#options.key) return
 
-			this.#currentThemes = persistedThemes || this.#defaultThemes
+			this.#currentThemes =
+				(persistedThemes as Themes<T>) || this.#defaultThemes
 
 			const resolvedThemes = this.#resolveThemes()
 
