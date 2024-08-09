@@ -1,7 +1,8 @@
 import * as React from 'react'
 import type { Options } from '.'
+import { name as packageName } from '../package.json'
 
-export function usePalettez<T extends Options>(key = 'palettez') {
+export function usePalettez<T extends Options>(key = packageName) {
 	const {
 		themesAndOptions,
 		getThemes,

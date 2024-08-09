@@ -1,6 +1,6 @@
 {
   "installDependencies": true,
-  "startCommand": "npm i && npm run dev",
+  "startCommand": "pnpm dev",
   "env": {
     "ENABLE_CJS_IMPORTS": true
   }

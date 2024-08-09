@@ -1,6 +1,6 @@
 # Palettez
 
-A flexible and powerful theme management library for JavaScript applications.
+A flexible and powerful theme management library for JavaScript applications
 
 ## Features
 
@@ -9,9 +9,9 @@ A flexible and powerful theme management library for JavaScript applications.
   - Contrast preference: standard, high
   - Spacing: compact, comfortable, spacious
 - Persist theme selection to client or server storage
+- No theme flicker on page load
 - Dynamically change themes based on system settings
 - Sync theme selection across tabs and windows
-- No theme flicker on page load
 
 ## Demo
 
@@ -33,7 +33,7 @@ pnpm add palettez
 
 ## Basic Usage
 
-For client-side persistence (eg. localStorage), it's recommended to initialize Palettez in a synchronous script to avoid theme flicker on page load.If your project's bundler supports importing static asset as string, you can inline the minified version of Palettez to reduce the number of HTTP requests. Check out the demo for example usage with Astro and Vite.
+For client-side persistence (eg. localStorage), it's recommended to initialize Palettez in a synchronous script to avoid theme flicker on page load. If your project's bundler supports importing static asset as string, you can inline the minified version of Palettez to reduce the number of HTTP requests. Check out the demo for example usage with Astro and Vite.
 
 ```html
 <script src="https://unpkg.com/palettez"></script>
@@ -69,7 +69,7 @@ For client-side persistence (eg. localStorage), it's recommended to initialize P
       })
     })
 
-    themeManager.restore()
+    await themeManager.restore()
     themeManager.sync()
   })()
 </script>
@@ -104,6 +104,8 @@ const themeManager = create({
         system: {
           value: 'System',
           isDefault: true,
+
+          // only supported client-side
           media: {
             query: '(prefers-color-scheme: dark)',
             ifMatch: 'dark',
@@ -133,39 +135,43 @@ const themeManager = create({
     },
   },
 
-  // optional, specify your own storage solution
+  // optional, specify your own storage solution. localStorage is used by default.
   getStorage: () => {
     return {
-			getItem: (key: string) => {
-				return JSON.parse(window.localStorage.getItem(key) || 'null')
-			},
+      getItem: (key: string) => {
+        try {
+          return JSON.parse(window.localStorage.getItem(key) || 'null')
+        } catch {
+          return null
+        }
+      },
 
-			setItem: (key: string, value: object) => {
-				window.localStorage.setItem(key, JSON.stringify(value))
-			},
+      setItem: (key: string, value: object) => {
+        window.localStorage.setItem(key, JSON.stringify(value))
+      },
 
-			removeItem: (key: string) => {
-				window.localStorage.removeItem(key)
-			},
+      removeItem: (key: string) => {
+        window.localStorage.removeItem(key)
+      },
 
       // optional, useful for syncing theme selection across tabs and windows
-			watch: (cb) => {
-				const controller = new AbortController()
+      watch: (cb) => {
+        const controller = new AbortController()
 
-				window.addEventListener(
-					'storage',
-					(e) => {
-						const persistedThemes = JSON.parse(e.newValue || 'null')
-						cb(e.key, persistedThemes)
-					},
-					{ signal: controller.signal },
-				)
+        window.addEventListener(
+          'storage',
+          (e) => {
+            const persistedThemes = JSON.parse(e.newValue || 'null')
+            cb(e.key, persistedThemes)
+          },
+          { signal: controller.signal },
+        )
 
-				return () => {
-					controller.abort()
-				}
-			},
-		}
+        return () => {
+          controller.abort()
+        }
+      },
+    }
   }
 })
 ```
@@ -192,7 +198,7 @@ themeManager.subscribe((themes, resolvedThemes) => { /* ... */ })
 
 ## React Integration
 
-Ensure that you have called `create` before `usePalettez`.
+Ensure that you have called `create` before `usePalettez`. Since Palettez is initialized in a synchronous script, `usePalettez` should only be used in a client-only component.
 
 ```tsx
 import { usePalettez } from 'palettez/react'
@@ -201,33 +207,33 @@ export function ThemeSelect() {
   const { 
     themesAndOptions,
     themes,
-		setThemes,
+    setThemes,
     
     getResolvedThemes,
-		restore,
-		sync,
-		clear,
-		subscribe,
+    restore,
+    sync,
+    clear,
+    subscribe,
   } = usePalettez('palettez')
 
   return themesAndOptions.map((theme) => (
-		<div key={theme.key}>
-			<label htmlFor={theme.key}>{theme.label}</label>
-			<select
-				id={theme.key}
-				name={theme.key}
-				onChange={(e) => {
-					setThemes({ [theme.key]: e.target.value })
-				}}
-				value={themes[theme.key]}
-			>
-				{theme.options.map((option) => (
-					<option key={option.key} value={option.key}>
-						{option.value}
-					</option>
-				))}
-			</select>
-		</div>
-	))
+    <div key={theme.key}>
+      <label htmlFor={theme.key}>{theme.label}</label>
+      <select
+        id={theme.key}
+        name={theme.key}
+        onChange={(e) => {
+          setThemes({ [theme.key]: e.target.value })
+        }}
+        value={themes[theme.key]}
+      >
+        {theme.options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.value}
+          </option>
+        ))}
+      </select>
+    </div>
+  ))
 }
 ```

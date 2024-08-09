@@ -1,5 +1,11 @@
 import { name as packageName } from '../package.json'
 
+type ThemeOption = {
+	value: string
+	isDefault?: boolean
+	media?: { query: string; ifMatch: string; ifNotMatch: string }
+}
+
 type ThemeConfig = Record<
 	string,
 	{
@@ -7,7 +13,9 @@ type ThemeConfig = Record<
 		options: Record<string, ThemeOption>
 	}
 >
+
 type Themes<T extends ThemeConfig> = { [K in keyof T]: keyof T[K]['options'] }
+
 type Listener<T extends ThemeConfig> = (
 	updatedThemes: Themes<T>,
 	resolvedThemes: Themes<T>,
@@ -18,12 +26,6 @@ export type Storage = {
 	setItem: (key: string, value: object) => void | Promise<void>
 	removeItem: (key: string) => void | Promise<void>
 	watch?: (cb: (key: string | null, value: object) => void) => () => void
-}
-
-type ThemeOption = {
-	value: string
-	isDefault?: boolean
-	media?: { query: string; ifMatch: string; ifNotMatch: string }
 }
 
 export type Options = {
@@ -204,7 +206,6 @@ class ThemeManager<T extends Options['config']> {
 	}
 
 	#resolveThemes = (): Themes<T> => {
-		// @ts-expect-error TODO
 		return Object.fromEntries(
 			Object.entries(this.#currentThemes).map(([theme, optionKey]) => {
 				const option = this.#options.config[theme]!.options[optionKey]!
@@ -216,7 +217,7 @@ class ThemeManager<T extends Options['config']> {
 
 				return [theme, resolved]
 			}),
-		)
+		) as Themes<T>
 	}
 
 	#resolveThemeOption = ({
