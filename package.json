@@ -1,6 +1,6 @@
 {
 	"name": "palettez",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"description": "Palettez",
 	"keywords": ["theming"],
 	"repository": {
@@ -28,11 +28,14 @@
 			"types": "./palettez.min.txt.d.ts",
 			"import": "./dist/palettez.min.txt",
 			"default": "./dist/palettez.min.txt"
+		},
+		"./global": {
+			"types": "./global.d.ts"
 		}
 	},
 	"jsdelivr": "./dist/palettez.min.js",
 	"unpkg": "./dist/palettez.min.js",
-	"types": "./global.d.ts",
+	"types": "./dist/index.d.ts",
 	"files": ["dist", "global.d.ts", "palettez.min.txt.d.ts"],
 	"scripts": {
 		"build": "tsup"
