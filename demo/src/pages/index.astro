@@ -1,0 +1,69 @@
+---
+import palettez from 'palettez/raw?raw'
+
+import { ThemeSelect } from './_theme-select'
+import './_style.css'
+
+---
+
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta
+      name='viewport'
+      content='width=device-width,initial-scale=1,shrink-to-fit=no'
+    />
+    <title>Demo</title>
+    <script is:inline set:html={palettez} />
+    <script is:inline>
+      ;(async () => {
+        const p = window.palettez.create({
+          config: {
+            colorScheme: {
+              label: 'Color scheme',
+              options: {
+                system: {
+                  value: 'System',
+                  isDefault: true,
+                  media: {
+                    query: '(prefers-color-scheme: dark)',
+                    ifMatch: 'dark',
+                    ifNotMatch: 'light',
+                  },
+                },
+                light: { value: 'Light' },
+                dark: { value: 'Dark' },
+              },
+            },
+            contrast: {
+              label: 'Contrast',
+              options: {
+                standard: { value: 'Standard', isDefault: true },
+                high: { value: 'High' },
+              },
+            },
+          },
+        })
+        p.subscribe((_, resolvedThemes) => {
+          Object.entries(resolvedThemes).forEach(([theme, optionKey]) => {
+            document.documentElement.dataset[theme] = optionKey
+          })
+        })
+       
+        await p.restore()
+
+        p.sync()
+      })()
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>Client-side persistence</h1>
+      <ThemeSelect client:only="react" />
+      <br />
+      <a href="/ssr">
+        Server-side persistence, zero client-side JavaScript &rarr;
+      </a>
+    </main>
+  </body>
+</html>

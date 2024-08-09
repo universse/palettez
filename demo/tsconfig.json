@@ -1,0 +1,8 @@
+{
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"jsx": "react-jsx",
+		"types": ["palettez/global"]
+	}
+}

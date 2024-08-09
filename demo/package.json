@@ -1,0 +1,20 @@
+{
+	"name": "demo",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "astro dev --port 3000"
+	},
+	"dependencies": {
+		"astro": "4.13.2",
+		"palettez": "*",
+		"react": "18.3.1",
+		"react-dom": "18.3.1"
+	},
+	"devDependencies": {
+		"@astrojs/node": "8.3.2",
+		"@astrojs/react": "3.6.1",
+		"@types/react": "18.3.3",
+		"@types/react-dom": "18.3.0"
+	}
+}

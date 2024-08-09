@@ -1,0 +1,63 @@
+:root[data-color-scheme="light"][data-contrast="standard"] {
+  --color-background: #fff;
+  --color-text: #555;
+
+  color-scheme: light;
+}
+
+:root[data-color-scheme="light"][data-contrast="high"] {
+  --color-background: #fff;
+  --color-text: #222;
+
+  color-scheme: light;
+}
+
+:root[data-color-scheme="dark"][data-contrast="standard"] {
+  --color-background: #000;
+  --color-text: #aaa;
+
+  color-scheme: dark;
+}
+
+:root[data-color-scheme="dark"][data-contrast="high"] {
+  --color-background: #000;
+  --color-text: #ddd;
+
+  color-scheme: dark;
+}
+
+:root[data-color-scheme="system"][data-contrast="standard"] {
+  --color-background: #fff;
+  --color-text: #555;
+  
+  color-scheme: light;
+}
+
+:root[data-color-scheme="system"][data-contrast="high"] {
+  --color-background: #fff;
+  --color-text: #222;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-color-scheme="system"][data-contrast="standard"] {
+    --color-background: #000;
+    --color-text: #aaa;
+
+    color-scheme: dark;
+  }
+  
+  :root[data-color-scheme="system"][data-contrast="high"] {
+    --color-background: #000;
+    --color-text: #ddd;
+
+    color-scheme: dark;
+  }
+}
+
+
+body {
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
