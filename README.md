@@ -93,7 +93,8 @@ If you are using TypeScript, add `palettez/global` to `compilerOptions.types` in
 import { create } from 'palettez'
 
 const themeManager = create({
-  // optional, default: 'palettez'
+  // optional, default 'palettez'
+  // should be unique, also used as storage key
   key: 'palettez',
 
   // required, specify theme and options
