@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type Options, type Storage, create, read } from '../src'
+import { type Options, create, read } from '../src'
 
 const mockConfig = {
 	colorScheme: {
@@ -29,7 +29,7 @@ const mockConfig = {
 	},
 }
 
-const mockStorage: Storage = {
+const mockStorage = {
 	getItem: vi.fn(),
 	setItem: vi.fn(),
 	removeItem: vi.fn(),
@@ -39,7 +39,7 @@ const mockStorage: Storage = {
 const mockOptions: Options = {
 	key: 'palettez',
 	config: mockConfig,
-	getStorage: () => mockStorage,
+	storageAdapter: () => mockStorage,
 }
 
 describe('ThemeManager', () => {

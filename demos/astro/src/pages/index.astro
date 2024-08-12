@@ -1,9 +1,7 @@
 ---
 import palettez from 'palettez/raw?raw'
-
-import { ThemeSelect } from './_theme-select'
+import { ClientThemeSelect } from './_client-theme-select'
 import './_style.css'
-
 ---
 
 <html lang='en'>
@@ -11,9 +9,9 @@ import './_style.css'
     <meta charset='UTF-8' />
     <meta
       name='viewport'
-      content='width=device-width,initial-scale=1,shrink-to-fit=no'
+      content='width=device-width,initial-scale=1'
     />
-    <title>Demo</title>
+    <title>Demo with Astro</title>
     <script is:inline set:html={palettez} />
     <script is:inline>
       ;(async () => {
@@ -42,14 +40,15 @@ import './_style.css'
                 high: { value: 'High' },
               },
             },
-          },
+          }
         })
+
         p.subscribe((_, resolvedThemes) => {
-          Object.entries(resolvedThemes).forEach(([theme, optionKey]) => {
+          for (const [theme, optionKey] of Object.entries(resolvedThemes)) {
             document.documentElement.dataset[theme] = optionKey
-          })
+          }
         })
-       
+
         await p.restore()
 
         p.sync()
@@ -58,11 +57,20 @@ import './_style.css'
   </head>
   <body>
     <main>
-      <h1>Client-side persistence</h1>
-      <ThemeSelect client:only="react" />
+      <h1>Client only persistence</h1>
+      <p>
+        - User's preferred themes are persisted in localStorage.
+        <br />- Theme change are synced with other windows and tabs via
+        storage event.
+      </p>
+      <ClientThemeSelect client:only="react" />
       <br />
-      <a href="/ssr">
-        Server-side persistence, zero client-side JavaScript &rarr;
+      <a href="/">
+        Client only persistence &rarr;
+      </a>
+      <br />
+      <a href="/client-server">
+        Client & server persistence &rarr;
       </a>
     </main>
   </body>

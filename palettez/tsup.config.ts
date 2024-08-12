@@ -4,8 +4,9 @@ import { name as packageName } from './package.json'
 export default defineConfig([
 	{
 		clean: true,
+		dts: true,
 		entry: {
-			[packageName]: 'src/index.ts',
+			[packageName]: 'src/umd.ts',
 		},
 		globalName: packageName,
 		format: ['iife'],
@@ -17,7 +18,7 @@ export default defineConfig([
 	{
 		clean: true,
 		entry: {
-			[packageName]: 'src/index.ts',
+			[packageName]: 'src/umd.ts',
 		},
 		globalName: packageName,
 		format: ['iife'],

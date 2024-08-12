@@ -1,11 +1,13 @@
 import { usePalettez } from 'palettez/react'
 
-export function ThemeSelect() {
-	const { themesAndOptions, themes, setThemes } = usePalettez('palettez')
+export function ClientThemeSelect() {
+	const { themesAndOptions, themes, setThemes } = usePalettez(
+		window.palettez.read(),
+	)
 
 	return themesAndOptions.map((theme) => (
 		<div key={theme.key}>
-			<label htmlFor={theme.key}>{theme.label}</label>
+			<label htmlFor={theme.key}>{theme.label}</label>{' '}
 			<select
 				id={theme.key}
 				name={theme.key}

@@ -8,8 +8,19 @@ yarn-error.log*
 .pnpm-debug.log
 
 # Builds
-dist*
+dist
 .astro
+.next
+out
+build
+.cache
+
+# Verce
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
 # Personal
 ideas.md

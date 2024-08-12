@@ -1,69 +1,10 @@
 {
-	"name": "palettez",
-	"version": "0.0.10",
-	"description": "Palettez",
-	"keywords": ["theming"],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/universse/palettez.git"
-	},
-	"license": "MIT",
-	"author": "Si Phuoc <phuoc317049@gmail.com>",
-	"sideEffects": false,
-	"type": "module",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs",
-			"default": "./dist/index.js"
-		},
-		"./react": {
-			"types": "./dist/react.d.ts",
-			"import": "./dist/react.js",
-			"require": "./dist/react.cjs",
-			"default": "./dist/react.js"
-		},
-		"./raw": {
-			"types": "./palettez.min.txt.d.ts",
-			"import": "./dist/palettez.min.txt",
-			"default": "./dist/palettez.min.txt"
-		},
-		"./global": {
-			"types": "./global.d.ts"
-		}
-	},
-	"jsdelivr": "./dist/palettez.min.js",
-	"unpkg": "./dist/palettez.min.js",
-	"types": "./dist/index.d.ts",
-	"files": ["dist", "global.d.ts", "palettez.min.txt.d.ts"],
-	"scripts": {
-		"build": "tsup",
-		"test": "vitest"
-	},
+	"private": true,
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
 		"@changesets/changelog-github": "0.5.0",
 		"@changesets/cli": "2.27.7",
 		"@commitlint/cli": "19.4.0",
-		"@commitlint/config-conventional": "19.2.2",
-		"@types/react": "18.3.3",
-		"jsdom": "24.1.1",
-		"react": "18.3.1",
-		"react-dom": "18.3.1",
-		"tsup": "8.2.4",
-		"typescript": "5.5.4",
-		"vitest": "2.0.5"
-	},
-	"peerDependencies": {
-		"react": "^18.0.0"
-	},
-	"peerDependenciesMeta": {
-		"react": {
-			"optional": true
-		}
-	},
-	"publishConfig": {
-		"access": "public"
+		"@commitlint/config-conventional": "19.2.2"
 	}
 }

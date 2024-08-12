@@ -32,7 +32,7 @@ jobs:
         run: pnpm i --ignore-scripts
 
       - name: Build
-        run: pnpm build
+        run: pnpm --filter=palettez build
 
       - name: Publish
         id: changesets

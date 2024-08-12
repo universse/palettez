@@ -1,8 +1,10 @@
 import * as React from 'react'
-import type { Options } from '.'
-import { name as packageName } from '../package.json'
+import type { Options, ThemeManager, Themes } from '.'
 
-export function usePalettez<T extends Options>(key = packageName) {
+export function usePalettez<T extends Options['config']>(
+	themeManager: ThemeManager<T>,
+	persistedServerThemes: Record<string, string> | null = null,
+) {
 	const {
 		themesAndOptions,
 		getThemes,
@@ -12,12 +14,12 @@ export function usePalettez<T extends Options>(key = packageName) {
 		sync,
 		clear,
 		subscribe,
-	} = window.palettez.read<T>(key)
+	} = themeManager
 
 	const themes = React.useSyncExternalStore(
-		React.useCallback((callback) => subscribe(callback), [key]),
+		React.useCallback((callback) => subscribe(callback), []),
 		() => getThemes(),
-		() => null,
+		() => persistedServerThemes as Themes<T>,
 	)
 
 	return {

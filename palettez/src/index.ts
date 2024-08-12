@@ -1,4 +1,20 @@
 import { name as packageName } from '../package.json'
+import {
+	type Storage,
+	localStorageAdapter,
+	memoryStorageAdapter,
+} from './storage'
+
+export {
+	create,
+	read,
+	memoryStorageAdapter,
+	localStorageAdapter,
+	type Options,
+	type Storage,
+	type Themes,
+	type ThemeManager,
+}
 
 type ThemeOption = {
 	value: string
@@ -21,17 +37,11 @@ type Listener<T extends ThemeConfig> = (
 	resolvedThemes: Themes<T>,
 ) => void
 
-export type Storage = {
-	getItem: (key: string) => object | Promise<object>
-	setItem: (key: string, value: object) => void | Promise<void>
-	removeItem: (key: string) => void | Promise<void>
-	watch?: (cb: (key: string | null, value: object) => void) => () => void
-}
-
-export type Options = {
+type Options = {
 	key?: string
 	config: ThemeConfig
-	getStorage?: () => Storage
+	initialThemes?: Record<string, string>
+	storageAdapter?: () => Storage
 }
 
 const isClient =
@@ -41,42 +51,30 @@ const isClient =
 
 const DEFAULT_OPTIONS = {
 	key: packageName,
-	getStorage: (): Storage => {
-		return {
-			getItem: (key: string) => {
-				try {
-					return JSON.parse(window.localStorage.getItem(key) || 'null')
-				} catch {
-					return null
-				}
-			},
+	storageAdapter: localStorageAdapter(),
+}
 
-			setItem: (key: string, value: object) => {
-				window.localStorage.setItem(key, JSON.stringify(value))
-			},
+export function getThemeAndOptions(config: ThemeConfig) {
+	return Object.entries(config).reduce<
+		Array<{
+			key: string
+			label: string
+			options: Array<{ key: string; value: string }>
+		}>
+	>((acc, [theme, themeConfig]) => {
+		acc.push({
+			key: theme,
+			label: themeConfig.label,
+			options: Object.entries(themeConfig.options).map(
+				([optionKey, { value }]) => ({
+					key: optionKey,
+					value,
+				}),
+			),
+		})
 
-			removeItem: (key: string) => {
-				window.localStorage.removeItem(key)
-			},
-
-			watch: (cb) => {
-				const controller = new AbortController()
-
-				window.addEventListener(
-					'storage',
-					(e) => {
-						const persistedThemes = JSON.parse(e.newValue || 'null')
-						cb(e.key, persistedThemes)
-					},
-					{ signal: controller.signal },
-				)
-
-				return () => {
-					controller.abort()
-				}
-			},
-		}
-	},
+		return acc
+	}, [])
 }
 
 class ThemeManager<T extends Options['config']> {
@@ -96,31 +94,7 @@ class ThemeManager<T extends Options['config']> {
 	#listeners: Set<Listener<T>> = new Set<Listener<T>>()
 
 	constructor(options: Options) {
-		this.#options = { ...DEFAULT_OPTIONS, ...options }
-		this.#storage = this.#options.getStorage()
-
-		const { config } = this.#options
-
-		this.themesAndOptions = Object.entries(config).reduce<
-			Array<{
-				key: string
-				label: string
-				options: Array<{ key: string; value: string }>
-			}>
-		>((acc, [theme, themeConfig]) => {
-			acc.push({
-				key: theme,
-				label: themeConfig.label,
-				options: Object.entries(themeConfig.options).map(
-					([optionKey, { value }]) => ({
-						key: optionKey,
-						value,
-					}),
-				),
-			})
-
-			return acc
-		}, [])
+		const { config } = options
 
 		this.#defaultThemes = Object.fromEntries(
 			Object.entries(config).map(([theme, themeConfig]) => {
@@ -133,7 +107,19 @@ class ThemeManager<T extends Options['config']> {
 			}),
 		) as Themes<T>
 
-		this.#currentThemes = { ...this.#defaultThemes }
+		this.#options = {
+			...DEFAULT_OPTIONS,
+			...options,
+			initialThemes: options.initialThemes || {},
+		}
+		this.#storage = this.#options.storageAdapter()
+
+		this.themesAndOptions = getThemeAndOptions(config)
+
+		this.#currentThemes = {
+			...this.#defaultThemes,
+			...this.#options.initialThemes,
+		}
 
 		this.#resolvedOptionsByTheme = Object.fromEntries(
 			Object.keys(config).map((theme) => [theme, {}]),
@@ -155,6 +141,8 @@ class ThemeManager<T extends Options['config']> {
 
 		this.#notify(resolvedThemes)
 
+		// this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
+
 		await this.#storage.setItem(this.#options.key, this.#currentThemes)
 	}
 
@@ -166,6 +154,28 @@ class ThemeManager<T extends Options['config']> {
 		const resolvedThemes = this.#resolveThemes()
 
 		this.#notify(resolvedThemes)
+
+		// this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
+	}
+
+	clear = async (): Promise<void> => {
+		this.#currentThemes = { ...this.#defaultThemes }
+
+		const resolvedThemes = this.#resolveThemes()
+
+		this.#notify(resolvedThemes)
+
+		// this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
+
+		await this.#storage.removeItem(this.#options.key)
+	}
+
+	subscribe: (callback: Listener<T>) => () => void = (callback) => {
+		this.#listeners.add(callback)
+
+		return () => {
+			this.#listeners.delete(callback)
+		}
 	}
 
 	sync = (): (() => void) => {
@@ -185,24 +195,6 @@ class ThemeManager<T extends Options['config']> {
 
 			this.#notify(resolvedThemes)
 		})
-	}
-
-	clear = async (): Promise<void> => {
-		this.#currentThemes = { ...this.#defaultThemes }
-
-		const resolvedThemes = this.#resolveThemes()
-
-		this.#notify(resolvedThemes)
-
-		await this.#storage.removeItem(this.#options.key)
-	}
-
-	subscribe: (callback: Listener<T>) => () => void = (callback) => {
-		this.#listeners.add(callback)
-
-		return () => {
-			this.#listeners.delete(callback)
-		}
 	}
 
 	#resolveThemes = (): Themes<T> => {
@@ -264,21 +256,21 @@ class ThemeManager<T extends Options['config']> {
 	}
 
 	#notify = (resolvedThemes: Themes<T>): void => {
-		this.#listeners.forEach((listener) =>
-			listener(this.#currentThemes, resolvedThemes),
-		)
+		for (const listener of this.#listeners) {
+			listener(this.#currentThemes, resolvedThemes)
+		}
 	}
 }
 
 const registry = new Map<string, ThemeManager<Options['config']>>()
 
-export function create<T extends Options>(options: T) {
+function create<T extends Options>(options: T) {
 	const themeManager = new ThemeManager<T['config']>(options)
 	registry.set(options.key || DEFAULT_OPTIONS.key, themeManager)
 	return themeManager
 }
 
-export function read<T extends Options>(key: string = packageName) {
+function read<T extends Options>(key: string = packageName) {
 	const themeManager = registry.get(key)
 	if (!themeManager) {
 		throw new Error(

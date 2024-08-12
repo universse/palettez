@@ -1,6 +1,6 @@
 # Palettez
 
-A flexible and powerful theme management library for JavaScript applications
+A flexible, framework-agnostic theme management library for JavaScript applications
 
 ## Features
 
@@ -8,7 +8,7 @@ A flexible and powerful theme management library for JavaScript applications
   - Color scheme: light, dark, system
   - Contrast preference: standard, high
   - Spacing: compact, comfortable, spacious
-- Persist theme selection to client or server storage
+- Persist theme selection to client storage and optionally server storage
 - No theme flicker on page load
 - Dynamically change themes based on system settings
 - Sync theme selection across tabs and windows
@@ -64,9 +64,9 @@ For client-side persistence (eg. localStorage), it's recommended to initialize P
     })
 
     themeManager.subscribe((_, resolvedThemes) => {
-      Object.entries(resolvedThemes).forEach(([theme, optionKey]) => {
+      for (const [theme, optionKey] of Object.entries(resolvedThemes)) {
         document.documentElement.dataset[theme] = optionKey
-      })
+      }
     })
 
     await themeManager.restore()
@@ -137,7 +137,7 @@ const themeManager = create({
   },
 
   // optional, specify your own storage solution. localStorage is used by default.
-  getStorage: () => {
+  storageAdapter: () => {
     return {
       getItem: (key: string) => {
         try {
@@ -185,16 +185,37 @@ import { read } from 'palettez'
 const themeManager = read('palettez')
 ```
 
-### Methods
+### Properties & Methods
 
 ```ts
+themeManager.themesAndOptions
+// [
+//   { key: 'colorScheme', 
+//     label: 'Color scheme',
+//     options: [
+//       { key: 'system', value: 'System' },
+//       { key: 'light', value: 'Light' },
+//       { key: 'dark', value: 'Dark' },
+//     ]
+//   },
+//   {
+//     key: 'contrast',
+//     label: 'Contrast',
+//     options: [
+//       { key: 'system', value: 'System' },
+//       { key: 'standard', value: 'Standard' },
+//       { key: 'high', value: 'High' },
+//     ]
+//   }
+// ]
+
 themeManager.getThemes() // { colorScheme: 'system', contrast: 'standard' }
 themeManager.getResolvedThemes() // { colorScheme: 'light', contrast: 'standard' }
 themeManager.setThemes({ contrast: 'high' })
 themeManager.restore() // restore persisted theme selection
 themeManager.sync() // useful for syncing theme selection across tabs and windows
 themeManager.clear() // clear persisted theme selection
-themeManager.subscribe((themes, resolvedThemes) => { /* ... */ })
+themeManager.subscribe((themes, resolvedThemes) => { /* ... */ }) // return unsubscribe function
 ```
 
 ## React Integration
@@ -215,7 +236,7 @@ export function ThemeSelect() {
     sync,
     clear,
     subscribe,
-  } = usePalettez('palettez')
+  } = usePalettez()
 
   return themesAndOptions.map((theme) => (
     <div key={theme.key}>
