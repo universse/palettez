@@ -7,7 +7,7 @@
 	},
 	"dependencies": {
 		"astro": "4.13.3",
-		"palettez": "workspace:*",
+		"palettez": "*",
 		"react": "18.3.1",
 		"react-dom": "18.3.1"
 	},

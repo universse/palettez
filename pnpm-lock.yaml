@@ -30,8 +30,8 @@ importers:
         specifier: 4.13.3
         version: 4.13.3(@types/node@22.2.0)(typescript@5.5.4)
       palettez:
-        specifier: workspace:*
-        version: link:../../palettez
+        specifier: '*'
+        version: 0.0.11(react@18.3.1)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -67,8 +67,8 @@ importers:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       palettez:
-        specifier: workspace:*
-        version: link:../../palettez
+        specifier: '*'
+        version: 0.0.11(react@18.3.1)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -110,8 +110,8 @@ importers:
         specifier: 5.1.14
         version: 5.1.14
       palettez:
-        specifier: workspace:*
-        version: link:../../palettez
+        specifier: '*'
+        version: 0.0.11(react@18.3.1)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -3471,6 +3471,14 @@ packages:
 
   pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
+
+  palettez@0.0.11:
+    resolution: {integrity: sha512-kGBiZjAquAOkUOQpTx8jyuEiybKCWnGqQb3NFqSCuZfOyVcyG3ih1hPk06gF4U+J2Q6NJtmV4p2V1QOy8gSpug==}
+    peerDependencies:
+      react: ^18.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -8646,6 +8654,10 @@ snapshots:
   package-json-from-dist@1.0.0: {}
 
   pako@0.2.9: {}
+
+  palettez@0.0.11(react@18.3.1):
+    optionalDependencies:
+      react: 18.3.1
 
   parent-module@1.0.1:
     dependencies:

@@ -13,11 +13,21 @@ A flexible, framework-agnostic theme management library for JavaScript applicati
 - Dynamically change themes based on system settings
 - Sync theme selection across tabs and windows
 
-## Demo
+## Demos
 
-- Client-side persistence with localStorage and server-side persistence with cookies
+These demos demonstrate client-side persistence with localStorage and optionally server-side persistence with cookies.
 
-  [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/universse/palettez/tree/main/demo?title=Palettez%20Demo&file=src%2Fpages%2Findex.astro,src%2Fpages%2Fssr.astro)
+- Astro
+
+  [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/universse/palettez/tree/main/demos/astro?title=Palettez%20Demo%20with%20Astro&file=src%2Fpages%2Findex.astro,src%2Fpages%2Fclient-server.astro)
+
+- Remix
+
+  [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/universse/palettez/tree/main/demos/remix?title=Palettez%20Demo%20with%20Remix&file=app%2Froutes%2F_index.tsx,app%2Froutes%2Fclient-server.tsx)
+
+- Next.js
+
+  [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/universse/palettez/tree/main/demos/next?title=Palettez%20Demo%20with%20Next.js&file=app%2Fpage.tsx,app%2Fclient-server%2Fpage.tsx,pages%2Fpages%2Fclient-only.tsx,pages%2Fpages%2Fclient-server.tsx)
 
 ## Installation
 

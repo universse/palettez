@@ -9,7 +9,7 @@
 		"body-parser": "1.20.2",
 		"cookies": "0.9.1",
 		"next": "14.2.5",
-		"palettez": "workspace:*",
+		"palettez": "*",
 		"react": "18.3.1",
 		"react-dom": "18.3.1"
 	},
