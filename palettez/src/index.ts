@@ -41,7 +41,7 @@ type Options = {
 	key?: string
 	config: ThemeConfig
 	initialThemes?: Record<string, string>
-	storageAdapter?: () => Storage
+	storage?: () => Storage
 }
 
 const isClient =
@@ -51,7 +51,7 @@ const isClient =
 
 const DEFAULT_OPTIONS = {
 	key: packageName,
-	storageAdapter: localStorageAdapter(),
+	storage: localStorageAdapter(),
 }
 
 export function getThemeAndOptions(config: ThemeConfig) {
@@ -112,7 +112,7 @@ class ThemeManager<T extends Options['config']> {
 			...options,
 			initialThemes: options.initialThemes || {},
 		}
-		this.#storage = this.#options.storageAdapter()
+		this.#storage = this.#options.storage()
 
 		this.themesAndOptions = getThemeAndOptions(config)
 

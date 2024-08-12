@@ -1,21 +1,20 @@
 # Palettez
 
-A flexible, framework-agnostic theme management library for JavaScript applications
+A flexible theme management library for JavaScript applications
 
 ## Features
 
-- Manage parallel themes with multiple options, for eg:
+- Manage multi-dimensional themes with multiple options, for eg:
   - Color scheme: light, dark, system
   - Contrast preference: standard, high
   - Spacing: compact, comfortable, spacious
-- Persist theme selection to client storage and optionally server storage
+- Framework-agnostic
 - No theme flicker on page load
 - Dynamically change themes based on system settings
 - Sync theme selection across tabs and windows
+- Customizable data persistence; use localStorage by default
 
 ## Demos
-
-These demos demonstrate client-side persistence with localStorage and optionally server-side persistence with cookies.
 
 - Astro
 
@@ -43,7 +42,7 @@ pnpm add palettez
 
 ## Basic Usage
 
-For client-side persistence (eg. localStorage), it's recommended to initialize Palettez in a synchronous script to avoid theme flicker on page load. If your project's bundler supports importing static asset as string, you can inline the minified version of Palettez to reduce the number of HTTP requests. Check out the demo for example usage with Astro and Vite.
+It's recommended to initialize Palettez in a synchronous script to avoid theme flicker on page load. If your project's bundler supports importing static asset as string, you can inline the minified version of Palettez to reduce the number of HTTP requests. Check out the Astro/Remix demo for example of this pattern with Vite.
 
 ```html
 <script src="https://unpkg.com/palettez"></script>
@@ -147,7 +146,7 @@ const themeManager = create({
   },
 
   // optional, specify your own storage solution. localStorage is used by default.
-  storageAdapter: () => {
+  storage: () => {
     return {
       getItem: (key: string) => {
         try {

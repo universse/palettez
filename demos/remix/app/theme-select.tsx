@@ -33,7 +33,7 @@ export function ThemeSelect({
 				},
 			},
 			initialThemes: persistedServerThemes,
-			storageAdapter: memoryStorageAdapter(),
+			storage: memoryStorageAdapter(),
 		}),
 	)
 

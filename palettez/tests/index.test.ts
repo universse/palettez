@@ -39,7 +39,7 @@ const mockStorage = {
 const mockOptions: Options = {
 	key: 'palettez',
 	config: mockConfig,
-	storageAdapter: () => mockStorage,
+	storage: () => mockStorage,
 }
 
 describe('ThemeManager', () => {
