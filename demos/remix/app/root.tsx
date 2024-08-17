@@ -1,5 +1,4 @@
-import type { MetaFunction } from '@remix-run/node'
-import { Outlet } from '@remix-run/react'
+import { type MetaFunction, Outlet } from '@remix-run/react'
 import type * as React from 'react'
 import './style.css'
 

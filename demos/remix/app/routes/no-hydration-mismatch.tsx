@@ -1,15 +1,15 @@
 import {
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	json,
-} from '@remix-run/node'
-import {
 	Links,
 	Meta,
 	Scripts,
 	useActionData,
 	useLoaderData,
 } from '@remix-run/react'
+import {
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	json,
+} from '@vercel/remix'
 import { getThemeAndOptions } from 'palettez'
 import { ThemeSelect } from '../theme-select'
 import { ThemeStoreProvider } from '../theme-store-provider'
