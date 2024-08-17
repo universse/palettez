@@ -1,0 +1,7 @@
+[
+	{
+		"path": "dist/palettez.min.js",
+		"limit": "2 KB",
+		"gzip": true
+	}
+]

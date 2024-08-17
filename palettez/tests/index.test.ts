@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type Options, create, read } from '../src'
+import { createThemeStore, getThemeStore } from '../src'
 
 const mockConfig = {
 	colorScheme: {
@@ -32,17 +32,17 @@ const mockConfig = {
 const mockStorage = {
 	getItem: vi.fn(),
 	setItem: vi.fn(),
-	removeItem: vi.fn(),
+	// removeItem: vi.fn(),
 	watch: vi.fn(),
-}
+} as const
 
-const mockOptions: Options = {
+const mockOptions = {
 	key: 'palettez',
 	config: mockConfig,
 	storage: () => mockStorage,
-}
+} as const
 
-describe('ThemeManager', () => {
+describe('ThemeStore', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		setSystemColorScheme('light')
@@ -52,16 +52,16 @@ describe('ThemeManager', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('should create a ThemeManager instance', () => {
-		const themeManager = create(mockOptions)
-		expect(themeManager).toBeDefined()
+	it('should create a ThemeStore instance', () => {
+		const themeStore = createThemeStore(mockOptions)
+		expect(themeStore).toBeDefined()
 	})
 
 	it('should get default themes', () => {
-		const themeManager = create(mockOptions)
-		const themes = themeManager.getThemes()
+		const themeStore = createThemeStore(mockOptions)
+		const themes = themeStore.getThemes()
 		expect(themes).toEqual({ colorScheme: 'system', contrast: 'standard' })
-		const resolvedThemes = themeManager.getResolvedThemes()
+		const resolvedThemes = themeStore.getResolvedThemes()
 		expect(resolvedThemes).toEqual({
 			colorScheme: 'light',
 			contrast: 'standard',
@@ -69,9 +69,9 @@ describe('ThemeManager', () => {
 	})
 
 	it('should set themes', async () => {
-		const themeManager = create(mockOptions)
-		await themeManager.setThemes({ colorScheme: 'dark', contrast: 'high' })
-		const themes = themeManager.getThemes()
+		const themeStore = createThemeStore(mockOptions)
+		themeStore.setThemes({ colorScheme: 'dark', contrast: 'high' })
+		const themes = themeStore.getThemes()
 		expect(themes).toEqual({ colorScheme: 'dark', contrast: 'high' })
 		expect(mockStorage.setItem).toHaveBeenCalledWith('palettez', {
 			colorScheme: 'dark',
@@ -80,9 +80,9 @@ describe('ThemeManager', () => {
 	})
 
 	it('should respond to media query changes', async () => {
-		const themeManager = create(mockOptions)
+		const themeStore = createThemeStore(mockOptions)
 		setSystemColorScheme('dark')
-		const resolvedThemes = themeManager.getResolvedThemes()
+		const resolvedThemes = themeStore.getResolvedThemes()
 		expect(resolvedThemes).toEqual({
 			colorScheme: 'dark',
 			contrast: 'standard',
@@ -94,42 +94,61 @@ describe('ThemeManager', () => {
 			colorScheme: 'dark',
 			contrast: 'high',
 		})
-		const themeManager = create(mockOptions)
-		await themeManager.restore()
-		const themes = themeManager.getThemes()
+		const themeStore = createThemeStore(mockOptions)
+		await themeStore.restore()
+		const themes = themeStore.getThemes()
 		expect(themes).toEqual({ colorScheme: 'dark', contrast: 'high' })
 	})
 
-	it('should clear themes', async () => {
-		const themeManager = create(mockOptions)
-		await themeManager.setThemes({ colorScheme: 'dark', contrast: 'high' })
-		await themeManager.clear()
-		const themes = themeManager.getThemes()
-		expect(themes).toEqual({ colorScheme: 'system', contrast: 'standard' })
-		expect(mockStorage.removeItem).toHaveBeenCalledWith('palettez')
-	})
+	// it('should clear themes', async () => {
+	// 	const themeStore = createThemeStore(mockOptions)
+	// 	themeStore.setThemes({ colorScheme: 'dark', contrast: 'high' })
+	// 	themeStore.clear()
+	// 	const themes = themeStore.getThemes()
+	// 	expect(themes).toEqual({ colorScheme: 'system', contrast: 'standard' })
+	// 	expect(mockStorage.removeItem).toHaveBeenCalledWith('palettez')
+	// })
 
 	it('should subscribe to theme changes', async () => {
-		const themeManager = create(mockOptions)
+		const themeStore = createThemeStore(mockOptions)
 		const mockListener = vi.fn()
-		themeManager.subscribe(mockListener)
-		await themeManager.setThemes({ contrast: 'high' })
+		themeStore.subscribe(mockListener)
+		await themeStore.setThemes({ contrast: 'high' })
 		expect(mockListener).toHaveBeenCalledWith(
 			{ colorScheme: 'system', contrast: 'high' },
 			{ colorScheme: 'light', contrast: 'high' },
 		)
 	})
+
+	it('should destroy', async () => {
+		const themeStore = createThemeStore(mockOptions)
+		const mockListener = vi.fn()
+		const unsubscribe = themeStore.subscribe(mockListener)
+		unsubscribe()
+
+		themeStore.setThemes({ contrast: 'high' })
+		expect(mockListener).not.toHaveBeenCalled()
+
+		setSystemColorScheme('dark')
+		const resolvedThemes = themeStore.getResolvedThemes()
+		expect(resolvedThemes).toEqual({
+			colorScheme: 'light',
+			contrast: 'high',
+		})
+
+		expect(() => getThemeStore(mockOptions.key)).toThrow()
+	})
 })
 
 describe('create and read functions', () => {
-	it('should create and read a ThemeManager instance', () => {
-		const createdManager = create(mockOptions)
-		const readManager = read('palettez')
-		expect(readManager).toBe(createdManager)
+	it('should create and read a ThemeStore instance', () => {
+		const createdStore = createThemeStore(mockOptions)
+		const store = getThemeStore('palettez')
+		expect(store).toBe(createdStore)
 	})
 
-	it('should throw an error when reading a non-existent ThemeManager', () => {
-		expect(() => read('non-existent')).toThrow()
+	it('should throw an error when reading a non-existent ThemeStore', () => {
+		expect(() => getThemeStore('non-existent')).toThrow()
 	})
 })
 

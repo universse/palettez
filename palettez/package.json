@@ -1,6 +1,6 @@
 {
 	"name": "palettez",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"description": "Palettez",
 	"keywords": ["theming"],
 	"repository": {
@@ -15,25 +15,16 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
-			"require": "./dist/index.cjs",
-			"default": "./dist/index.js"
+			"require": "./dist/index.cjs"
 		},
 		"./react": {
 			"types": "./dist/react.d.ts",
 			"import": "./dist/react.js",
-			"require": "./dist/react.cjs",
-			"default": "./dist/react.js"
-		},
-		"./storage": {
-			"types": "./dist/storage.d.ts",
-			"import": "./dist/storage.js",
-			"require": "./dist/storage.cjs",
-			"default": "./dist/storage.js"
+			"require": "./dist/react.cjs"
 		},
 		"./raw": {
 			"types": "./palettez.min.txt.d.ts",
-			"import": "./dist/palettez.min.txt",
-			"default": "./dist/palettez.min.txt"
+			"import": "./dist/palettez.min.txt"
 		},
 		"./global": {
 			"types": "./global.d.ts"
@@ -46,13 +37,16 @@
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
+		"size": "pnpm build && size-limit",
 		"test": "vitest"
 	},
 	"devDependencies": {
+		"@size-limit/preset-small-lib": "11.1.4",
 		"@types/react": "18.3.3",
 		"jsdom": "24.1.1",
 		"react": "18.3.1",
 		"react-dom": "18.3.1",
+		"size-limit": "11.1.4",
 		"tsup": "8.2.4",
 		"typescript": "5.5.4",
 		"vitest": "2.0.5"

@@ -1,15 +1,34 @@
-// import { name as packageName } from '../package.json'
+import { name as packageName } from '../package.json'
 
-export type Storage = {
+export {
+	localStorageAdapter,
+	sessionStorageAdapter,
+	memoryStorageAdapter,
+	type StorageAdapter,
+	type StorageAdapterCreate,
+	type StorageAdapterCreator,
+}
+
+type StorageAdapter = {
 	getItem: (key: string) => object | null | Promise<object | null>
 	setItem: (key: string, value: object) => void | Promise<void>
-	removeItem: (key: string) => void | Promise<void>
-	// broadcast?: (key: string, value: object) => void
+	// removeItem: (key: string) => void | Promise<void>
+	broadcast?: (key: string, value: object) => void
 	watch?: (cb: (key: string | null, value: object) => void) => () => void
 }
 
-export function localStorageAdapter(): () => Storage {
-	return () => {
+type StorageAdapterCreate =
+	| (({
+			abortController,
+	  }: { abortController?: AbortController }) => StorageAdapter)
+	| (() => StorageAdapter)
+
+type StorageAdapterCreator<Options> = (
+	options?: Options,
+) => StorageAdapterCreate
+
+const localStorageAdapter: StorageAdapterCreator<never> = () => {
+	return ({ abortController }: { abortController?: AbortController }) => {
 		return {
 			getItem: (key: string) => {
 				try {
@@ -23,9 +42,9 @@ export function localStorageAdapter(): () => Storage {
 				window.localStorage.setItem(key, JSON.stringify(value))
 			},
 
-			removeItem: (key: string) => {
-				window.localStorage.removeItem(key)
-			},
+			// removeItem: (key: string) => {
+			// 	window.localStorage.removeItem(key)
+			// },
 
 			watch: (cb) => {
 				const controller = new AbortController()
@@ -36,7 +55,11 @@ export function localStorageAdapter(): () => Storage {
 						const persistedThemes = JSON.parse(e.newValue || 'null')
 						cb(e.key, persistedThemes)
 					},
-					{ signal: controller.signal },
+					{
+						signal: abortController
+							? AbortSignal.any([abortController.signal, controller.signal])
+							: controller.signal,
+					},
 				)
 
 				return () => {
@@ -47,10 +70,53 @@ export function localStorageAdapter(): () => Storage {
 	}
 }
 
-export function memoryStorageAdapter(): () => Storage {
-	return () => {
+const sessionStorageAdapter: StorageAdapterCreator<never> = () => {
+	return ({ abortController }: { abortController?: AbortController }) => {
+		return {
+			getItem: (key: string) => {
+				try {
+					return JSON.parse(window.sessionStorage.getItem(key) || 'null')
+				} catch {
+					return null
+				}
+			},
+
+			setItem: (key: string, value: object) => {
+				window.sessionStorage.setItem(key, JSON.stringify(value))
+			},
+
+			// removeItem: (key: string) => {
+			// 	window.sessionStorage.removeItem(key)
+			// },
+
+			watch: (cb) => {
+				const controller = new AbortController()
+
+				window.addEventListener(
+					'storage',
+					(e) => {
+						const persistedThemes = JSON.parse(e.newValue || 'null')
+						cb(e.key, persistedThemes)
+					},
+					{
+						signal: abortController
+							? AbortSignal.any([abortController.signal, controller.signal])
+							: controller.signal,
+					},
+				)
+
+				return () => {
+					controller.abort()
+				}
+			},
+		}
+	}
+}
+
+const memoryStorageAdapter: StorageAdapterCreator<never> = () => {
+	return ({ abortController }: { abortController?: AbortController }) => {
 		const storage = new Map<string, object>()
-		// const channel = new BroadcastChannel(packageName)
+		const channel = new BroadcastChannel(packageName)
 
 		return {
 			getItem: (key: string) => {
@@ -61,29 +127,33 @@ export function memoryStorageAdapter(): () => Storage {
 				storage.set(key, value)
 			},
 
-			removeItem: (key: string) => {
-				storage.delete(key)
+			// removeItem: (key: string) => {
+			// 	storage.delete(key)
+			// },
+
+			broadcast: (key: string, value: object) => {
+				channel.postMessage({ key, themes: value })
 			},
 
-			// broadcast: (key: string, value: object) => {
-			// 	channel.postMessage({ key, themes: value })
-			// },
+			watch: (cb) => {
+				const controller = new AbortController()
 
-			// watch: (cb) => {
-			// 	const controller = new AbortController()
+				channel.addEventListener(
+					'message',
+					(e) => {
+						cb(e.data.key, e.data.themes)
+					},
+					{
+						signal: abortController
+							? AbortSignal.any([abortController.signal, controller.signal])
+							: controller.signal,
+					},
+				)
 
-			// 	channel.addEventListener(
-			// 		'message',
-			// 		(e) => {
-			// 			cb(e.data.key, e.data.themes)
-			// 		},
-			// 		{ signal: controller.signal },
-			// 	)
-
-			// 	return () => {
-			// 		controller.abort()
-			// 	}
-			// },
+				return () => {
+					controller.abort()
+				}
+			},
 		}
 	}
 }

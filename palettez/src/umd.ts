@@ -1,1 +1,8 @@
-export { create, read } from '.'
+export {
+	createThemeStore,
+	getThemeStore,
+	localStorageAdapter,
+	sessionStorageAdapter,
+	memoryStorageAdapter,
+	getThemeAndOptions,
+} from '.'
