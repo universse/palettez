@@ -52,6 +52,7 @@ const localStorageAdapter: StorageAdapterCreator<never> = () => {
 				window.addEventListener(
 					'storage',
 					(e) => {
+						if (e.storageArea !== localStorage) return
 						const persistedThemes = JSON.parse(e.newValue || 'null')
 						cb(e.key, persistedThemes)
 					},
@@ -95,6 +96,7 @@ const sessionStorageAdapter: StorageAdapterCreator<never> = () => {
 				window.addEventListener(
 					'storage',
 					(e) => {
+						if (e.storageArea !== sessionStorage) return
 						const persistedThemes = JSON.parse(e.newValue || 'null')
 						cb(e.key, persistedThemes)
 					},
