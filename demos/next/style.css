@@ -5,10 +5,16 @@
   box-sizing: border-box;
 }
 
-main {
-  padding: 16px;
+body {
+  font-family: sans-serif;
   min-height: 100vh;
+  display: flex;
 }
+
+body > div {
+  flex: 1 1 0%;
+}
+
 
 h1 {
   margin-bottom: 16px;
@@ -18,9 +24,13 @@ p {
   margin: 8px 0;
 }
 
-body, .theme {
+.theme {
   color: var(--color-text);
   background-color: var(--color-background);
+  
+  padding: 16px;
+  border: 2px solid #999;
+  width: fit-content;
 }
 
 :is(:root, .theme)[data-color-scheme="light"] {
@@ -29,16 +39,6 @@ body, .theme {
 
 :is(:root, .theme)[data-color-scheme="dark"] {
   color-scheme: dark;
-}
-
-:is(:root, .theme)[data-color-scheme="system"] {
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :is(:root, .theme)[data-color-scheme="system"] {
-    color-scheme: dark;
-  }
 }
 
 :is(:root, .theme)[data-color-scheme="light"][data-contrast="standard"] {
@@ -61,24 +61,11 @@ body, .theme {
   --color-text: #ddd;
 }
 
-:is(:root, .theme)[data-color-scheme="system"][data-contrast="standard"] {
-  --color-background: #fff;
-  --color-text: #555;
+
+#__next {
+  display: contents;
 }
 
-:is(:root, .theme)[data-color-scheme="system"][data-contrast="high"] {
-  --color-background: #fff;
-  --color-text: #222;
-}
-
-@media (prefers-color-scheme: dark) {
-  :is(:root, .theme)[data-color-scheme="system"][data-contrast="standard"] {
-    --color-background: #000;
-    --color-text: #aaa;
-  }
-  
-  :is(:root, .theme)[data-color-scheme="system"][data-contrast="high"] {
-    --color-background: #000;
-    --color-text: #ddd;
-  }
+body > #__next > div {
+  flex: 1 1 0%;
 }

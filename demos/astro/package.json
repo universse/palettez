@@ -6,13 +6,13 @@
 		"dev": "astro dev --port 3000"
 	},
 	"dependencies": {
-		"astro": "4.13.3",
-		"palettez": "*",
+		"astro": "4.14.2",
+		"palettez": "workspace:*",
 		"react": "18.3.1",
 		"react-dom": "18.3.1"
 	},
 	"devDependencies": {
-		"@astrojs/node": "8.3.2",
+		"@astrojs/node": "8.3.3",
 		"@astrojs/react": "3.6.2",
 		"@types/react": "18.3.3",
 		"@types/react-dom": "18.3.0",

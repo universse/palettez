@@ -16,7 +16,7 @@
 	"devDependencies": {
 		"@types/body-parser": "1.19.5",
 		"@types/cookie": "0.6.0",
-		"@types/node": "22.2.0",
+		"@types/node": "22.4.0",
 		"@types/react": "18.3.3",
 		"@types/react-dom": "18.3.0",
 		"typescript": "5.5.4"

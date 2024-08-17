@@ -15,12 +15,14 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
+			"require": "./dist/index.cjs",
+			"default": "./dist/index.js"
 		},
 		"./react": {
 			"types": "./dist/react.d.ts",
 			"import": "./dist/react.js",
-			"require": "./dist/react.cjs"
+			"require": "./dist/react.cjs",
+			"default": "./dist/react.js"
 		},
 		"./raw": {
 			"types": "./palettez.min.txt.d.ts",

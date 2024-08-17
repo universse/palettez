@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import '../style.css'
+import type * as React from 'react'
 
 export const metadata: Metadata = {
 	title: 'Demo with Next',
@@ -15,5 +16,9 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	return children
+	return (
+		<html lang='en'>
+			<body>{children}</body>
+		</html>
+	)
 }
