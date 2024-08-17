@@ -70,14 +70,12 @@ export default async function Page() {
 		)
 	}
 
+	const script = `(${createStoresScript.toString()})(${scriptArgs})`
+
 	return (
 		<>
 			<script src='https://unpkg.com/palettez' />
-			<script
-				dangerouslySetInnerHTML={{
-					__html: `(${createStoresScript.toString()})(${scriptArgs})`,
-				}}
-			/>
+			<script dangerouslySetInnerHTML={{ __html: script }} />
 			<ThemeWrapper storeKey='app'>
 				<main>
 					<h1>Multi-store with server persistence</h1>
@@ -85,8 +83,11 @@ export default async function Page() {
 						- User's preferred themes are persisted in cookies on the server and
 						in memory on the client
 						<br />- Theme selection is only saved upon form submission
+						<br />- To avoid the flashing of wrong theme value, consider putting
+						it in a dropdown menu, or rendering multiple sets and use CSS to
+						show the correct one based on the theme wrapper's attributes
 					</p>
-					<form action={updateTheme}>
+					<form autoComplete='off' action={updateTheme}>
 						<ThemeSelect storeKey='app' themesAndOptions={themesAndOptions} />
 						<button type='submit'>Save</button>
 					</form>
@@ -94,7 +95,7 @@ export default async function Page() {
 					<p>These 2 sections read from the same theme store</p>
 					<div style={{ display: 'flex', gap: 16 }}>
 						<ThemeWrapper storeKey='section1'>
-							<form action={updateTheme}>
+							<form autoComplete='off' action={updateTheme}>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -103,7 +104,7 @@ export default async function Page() {
 							</form>
 						</ThemeWrapper>
 						<ThemeWrapper storeKey='section1'>
-							<form action={updateTheme}>
+							<form autoComplete='off' action={updateTheme}>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -114,7 +115,7 @@ export default async function Page() {
 					</div>
 					<br />
 					<ThemeWrapper storeKey='section2'>
-						<form action={updateTheme}>
+						<form autoComplete='off' action={updateTheme}>
 							<ThemeSelect
 								storeKey='section2'
 								themesAndOptions={themesAndOptions}

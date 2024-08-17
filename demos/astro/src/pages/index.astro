@@ -1,7 +1,44 @@
 ---
+import { getThemeAndOptions } from 'palettez'
 import palettez from 'palettez/raw?raw'
-import { ClientThemeSelect } from './_client-theme-select'
+import { singleStoreScript } from './_single-store-script'
+import { ThemeSelect } from './_sync-theme-select'
 import './_style.css'
+
+const config = {
+	colorScheme: {
+		label: 'Color scheme',
+		options: {
+			system: {
+				value: 'System',
+				isDefault: true,
+				media: {
+					query: '(prefers-color-scheme: dark)',
+					ifMatch: 'dark',
+					ifNotMatch: 'light',
+				},
+			},
+			light: { value: 'Light' },
+			dark: { value: 'Dark' },
+		},
+	},
+	contrast: {
+		label: 'Contrast',
+		options: {
+			standard: { value: 'Standard', isDefault: true },
+			high: { value: 'High' },
+		},
+	},
+}
+
+const themesAndOptions = getThemeAndOptions(config)
+
+const storeKey = 'app'
+
+const scriptArgs = JSON.stringify({ key: storeKey, config })
+
+const script = `${palettez}
+(${singleStoreScript.toString()})(${scriptArgs})`
 ---
 
 <html lang='en'>
@@ -11,66 +48,38 @@ import './_style.css'
       name='viewport'
       content='width=device-width,initial-scale=1'
     />
-    <title>Demo with Astro</title>
-    <script is:inline set:html={palettez} />
-    <script is:inline>
-      ;(async () => {
-        const p = window.palettez.create({
-          config: {
-            colorScheme: {
-              label: 'Color scheme',
-              options: {
-                system: {
-                  value: 'System',
-                  isDefault: true,
-                  media: {
-                    query: '(prefers-color-scheme: dark)',
-                    ifMatch: 'dark',
-                    ifNotMatch: 'light',
-                  },
-                },
-                light: { value: 'Light' },
-                dark: { value: 'Dark' },
-              },
-            },
-            contrast: {
-              label: 'Contrast',
-              options: {
-                standard: { value: 'Standard', isDefault: true },
-                high: { value: 'High' },
-              },
-            },
-          }
-        })
-
-        p.subscribe((_, resolvedThemes) => {
-          for (const [theme, optionKey] of Object.entries(resolvedThemes)) {
-            document.documentElement.dataset[theme] = optionKey
-          }
-        })
-
-        await p.restore()
-
-        p.sync()
-      })()
-    </script>
+    <title>Palettez Astro Demo</title>
+    <script is:inline set:html={script} />
   </head>
   <body>
     <main>
-      <h1>Client only persistence</h1>
+      <h1>Basic usage</h1>
       <p>
-        - User's preferred themes are persisted in localStorage.
+        - User's preferred themes are persisted in localStorage
         <br />- Theme change are synced with other windows and tabs via
-        storage event.
+        storage event
+        <br />- To avoid the flashing of wrong theme value, consider putting
+        it in a dropdown menu, or rendering multiple sets and use CSS to
+        show the correct one based on the theme wrapper's attributes
       </p>
-      <ClientThemeSelect client:only="react" />
+      <ThemeSelect
+        client:load
+        storeKey={storeKey}
+        themesAndOptions={themesAndOptions}
+      />
+
       <br />
-      <a href="/">
-        Client only persistence &rarr;
+      <p>
+        <b>Demo links</b>
+      </p>
+      <a href='/'>Basic usage &rarr;</a>
+      <br />
+      <a href='/multi-store-with-server-persistence'>
+        Multi-store with server persistence &rarr;
       </a>
       <br />
-      <a href="/client-server">
-        Client & server persistence &rarr;
+      <a href='/no-hydration-mismatch'>
+        Multi-store with no hydration mismatch &rarr;
       </a>
     </main>
   </body>

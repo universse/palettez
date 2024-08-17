@@ -1,23 +1,47 @@
 import { createCookieSessionStorage } from '@remix-run/node'
 
-const themeStorage = createCookieSessionStorage({
+const themeStorage1 = createCookieSessionStorage({
 	cookie: {
-		path: '/',
+		path: '/multi-store-with-server-persistence',
 		httpOnly: true,
 		secure: true,
 		sameSite: 'strict',
+		maxAge: 600,
 	},
 })
 
-async function getThemeSession(request: Request) {
-	const session = await themeStorage.getSession(request.headers.get('Cookie'))
+const themeStorage2 = createCookieSessionStorage({
+	cookie: {
+		path: '/no-hydration-mismatch',
+		httpOnly: true,
+		secure: true,
+		sameSite: 'strict',
+		maxAge: 600,
+	},
+})
+
+async function getThemeSession1(request: Request) {
+	const session = await themeStorage1.getSession(request.headers.get('Cookie'))
 	return {
-		getTheme: () => {
-			return session.get('theme')
+		getTheme: (key: string) => {
+			return session.get(key)
 		},
-		setTheme: (theme: Record<string, string>) => session.set('theme', theme),
-		commit: () => themeStorage.commitSession(session),
+		setTheme: (key: string, theme: Record<string, string>) =>
+			session.set(key, theme),
+		commit: () => themeStorage1.commitSession(session),
 	}
 }
 
-export { getThemeSession }
+async function getThemeSession2(request: Request) {
+	const session = await themeStorage2.getSession(request.headers.get('Cookie'))
+	return {
+		getTheme: (key: string) => {
+			return session.get(key)
+		},
+		setTheme: (key: string, theme: Record<string, string>) =>
+			session.set(key, theme),
+		commit: () => themeStorage2.commitSession(session),
+	}
+}
+
+export { getThemeSession1, getThemeSession2 }

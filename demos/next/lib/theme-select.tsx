@@ -1,5 +1,4 @@
 'use client'
-
 import { usePalettez } from 'palettez/react'
 import { useThemeStoreContext } from './theme-store-provider'
 

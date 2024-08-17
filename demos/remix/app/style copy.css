@@ -24,7 +24,7 @@ p {
   margin: 8px 0;
 }
 
-.theme, :root[data-color-scheme][data-contrast] main {
+.theme {
   color: var(--color-text);
   background-color: var(--color-background);
   

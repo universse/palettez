@@ -74,21 +74,17 @@ export const getServerSideProps = async ({ req, res }) => {
 		)
 	}
 
-	return { props: { initialThemesByKey } }
+	const scriptArgs = JSON.stringify({ initialThemesByKey, config })
+	const script = `(${createStoresScript.toString()})(${scriptArgs})`
+
+	return { props: { initialThemesByKey, script } }
 }
 
-export default function Page({ initialThemesByKey }) {
-	const scriptArgs = JSON.stringify({ initialThemesByKey, config })
-
+export default function Page({ initialThemesByKey, script }) {
 	return (
 		<>
 			<script src='https://unpkg.com/palettez' />
-			<script
-				dangerouslySetInnerHTML={{
-					__html: `(${createStoresScript.toString()})(${scriptArgs})`,
-				}}
-				suppressHydrationWarning // hydration mismatch because server and hydration stringify function differently
-			/>
+			<script dangerouslySetInnerHTML={{ __html: script }} />
 			<ThemeWrapper storeKey='app'>
 				<main>
 					<h1>Multi-store with server persistence</h1>
@@ -96,8 +92,11 @@ export default function Page({ initialThemesByKey }) {
 						- User's preferred themes are persisted in cookies on the server and
 						in memory on the client
 						<br />- Theme selection is only saved upon form submission
+						<br />- To avoid the flashing of wrong theme value, consider putting
+						it in a dropdown menu, or rendering multiple sets and use CSS to
+						show the correct one based on the theme wrapper's attributes
 					</p>
-					<form method='post'>
+					<form autoComplete='off' method='post'>
 						<ThemeSelect storeKey='app' themesAndOptions={themesAndOptions} />
 						<button type='submit'>Save</button>
 					</form>
@@ -105,7 +104,7 @@ export default function Page({ initialThemesByKey }) {
 					<p>These 2 sections read from the same theme store</p>
 					<div style={{ display: 'flex', gap: 16 }}>
 						<ThemeWrapper storeKey='section1'>
-							<form method='post'>
+							<form autoComplete='off' method='post'>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -114,7 +113,7 @@ export default function Page({ initialThemesByKey }) {
 							</form>
 						</ThemeWrapper>
 						<ThemeWrapper storeKey='section1'>
-							<form method='post'>
+							<form autoComplete='off' method='post'>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -125,7 +124,7 @@ export default function Page({ initialThemesByKey }) {
 					</div>
 					<br />
 					<ThemeWrapper storeKey='section2'>
-						<form method='post'>
+						<form autoComplete='off' method='post'>
 							<ThemeSelect
 								storeKey='section2'
 								themesAndOptions={themesAndOptions}

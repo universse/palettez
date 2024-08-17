@@ -1,9 +1,10 @@
 import type { MetaFunction } from '@remix-run/node'
 import { Outlet } from '@remix-run/react'
+import type * as React from 'react'
 import './style.css'
 
 export const meta: MetaFunction = () => {
-	return [{ title: 'Demo with Remix' }]
+	return [{ title: 'Palettez Remix Demo' }]
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {

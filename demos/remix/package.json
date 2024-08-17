@@ -11,7 +11,7 @@
 		"@remix-run/react": "2.11.2",
 		"@remix-run/serve": "2.11.2",
 		"isbot": "5.1.16",
-		"palettez": "workspace:*",
+		"palettez": "*",
 		"react": "18.3.1",
 		"react-dom": "18.3.1"
 	},

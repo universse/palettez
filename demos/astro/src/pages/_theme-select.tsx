@@ -1,65 +1,26 @@
-import { create, memoryStorageAdapter } from 'palettez'
 import { usePalettez } from 'palettez/react'
-import * as React from 'react'
+import { useThemeStoreContext } from './_theme-store-provider'
 
 export function ThemeSelect({
-	persistedServerThemes,
-}: { persistedServerThemes: Record<string, string> }) {
-	const [themeManager] = React.useState(() =>
-		create({
-			config: {
-				colorScheme: {
-					label: 'Color scheme',
-					options: {
-						system: {
-							value: 'System',
-							isDefault: true,
-							media: {
-								query: '(prefers-color-scheme: dark)',
-								ifMatch: 'dark',
-								ifNotMatch: 'light',
-							},
-						},
-						light: { value: 'Light' },
-						dark: { value: 'Dark' },
-					},
-				},
-				contrast: {
-					label: 'Contrast',
-					options: {
-						standard: { value: 'Standard', isDefault: true },
-						high: { value: 'High' },
-					},
-				},
-			},
-			initialThemes: persistedServerThemes,
-			storage: memoryStorageAdapter(),
-		}),
-	)
+	storeKey,
+	themesAndOptions,
+}: {
+	storeKey: string
+	themesAndOptions: Array<{
+		key: string
+		label: string
+		options: Array<{ key: string; value: string }>
+	}>
+}) {
+	const stores = useThemeStoreContext()
 
-	const { themesAndOptions, themes, setThemes, subscribe } = usePalettez(
-		themeManager,
-		persistedServerThemes,
-	)
-
-	React.useEffect(() => {
-		const unsubscribe = subscribe((_, resolvedThemes) => {
-			for (const [theme, optionKey] of Object.entries(resolvedThemes)) {
-				;(
-					(document.querySelector('.theme') as
-						| HTMLElementTagNameMap['main']
-						| null) || document.documentElement
-				).dataset[theme] = optionKey
-			}
-		})
-
-		return () => {
-			unsubscribe()
-		}
-	}, [subscribe])
+	const { themes, setThemes } = usePalettez(() => stores[storeKey], {
+		initOnMount: true,
+	})
 
 	return themesAndOptions.map((theme) => (
 		<div key={theme.key}>
+			<input type='hidden' name='key' value={storeKey} />
 			<label htmlFor={theme.key}>{theme.label}</label>{' '}
 			<select
 				id={theme.key}

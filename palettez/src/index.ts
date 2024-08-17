@@ -170,7 +170,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 			this.#listeners.delete(callback)
 
 			if (this.#listeners.size === 0) {
-				this.#destroy()
+				this.destroy()
 			}
 		}
 	}
@@ -189,6 +189,12 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 				(persistedThemes as Themes<T>) || this.#defaultThemes,
 			)
 		})
+	}
+
+	destroy = (): void => {
+		this.#listeners.clear()
+		this.#abortController.abort()
+		registry.delete(this.#options.key)
 	}
 
 	#setThemeAndNotify = (theme: Themes<T>): void => {
@@ -262,11 +268,6 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 			listener(this.#currentThemes, resolvedThemes)
 		}
 	}
-
-	#destroy = (): void => {
-		this.#abortController.abort()
-		registry.delete(this.#options.key)
-	}
 }
 
 const registry = new Map<string, ThemeStore<ThemeConfig>>()
@@ -275,6 +276,9 @@ function createThemeStore<T extends ThemeStoreOptions>(
 	options: T,
 ): ThemeStore<T['config']> {
 	const storeKey = options.key || DEFAULT_OPTIONS.key
+	if (registry.has(storeKey)) {
+		registry.get(storeKey)!.destroy()
+	}
 	const themeStore = new ThemeStore<T['config']>(options)
 	registry.set(storeKey, themeStore)
 	return themeStore

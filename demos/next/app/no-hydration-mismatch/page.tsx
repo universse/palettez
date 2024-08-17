@@ -88,7 +88,7 @@ export default async function Page() {
 						no sync script required and no hydration mismatch
 						<br />- Theme selection is only saved upon form submission
 					</p>
-					<form action={updateTheme}>
+					<form autoComplete='off' action={updateTheme}>
 						<ThemeSelect storeKey='app' themesAndOptions={themesAndOptions} />
 						<button type='submit'>Save</button>
 					</form>
@@ -96,7 +96,7 @@ export default async function Page() {
 					<p>These 2 sections read from the same theme store</p>
 					<div style={{ display: 'flex', gap: 16 }}>
 						<ThemeWrapper storeKey='section1'>
-							<form action={updateTheme}>
+							<form autoComplete='off' action={updateTheme}>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -105,7 +105,7 @@ export default async function Page() {
 							</form>
 						</ThemeWrapper>
 						<ThemeWrapper storeKey='section1'>
-							<form action={updateTheme}>
+							<form autoComplete='off' action={updateTheme}>
 								<ThemeSelect
 									storeKey='section1'
 									themesAndOptions={themesAndOptions}
@@ -116,7 +116,7 @@ export default async function Page() {
 					</div>
 					<br />
 					<ThemeWrapper storeKey='section2'>
-						<form action={updateTheme}>
+						<form autoComplete='off' action={updateTheme}>
 							<ThemeSelect
 								storeKey='section2'
 								themesAndOptions={themesAndOptions}

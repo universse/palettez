@@ -3,7 +3,7 @@ import '../style.css'
 import type * as React from 'react'
 
 export const metadata: Metadata = {
-	title: 'Demo with Next',
+	title: 'Palettez Next.js App Router Demo',
 }
 
 export const viewport: Viewport = {
