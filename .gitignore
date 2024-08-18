@@ -15,12 +15,15 @@ out
 build
 .cache
 
-# Verce
+# Vercel
 .vercel
 
-# typescript
+# Typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Turborepo
+.turbo
 
 # Personal
 ideas.md
