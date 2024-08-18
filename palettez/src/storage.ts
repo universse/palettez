@@ -17,18 +17,16 @@ type StorageAdapter = {
 	watch?: (cb: (key: string | null, value: object) => void) => () => void
 }
 
-type StorageAdapterCreate =
-	| (({
-			abortController,
-	  }: { abortController?: AbortController }) => StorageAdapter)
-	| (() => StorageAdapter)
+type StorageAdapterCreate = ({
+	abortController,
+}: { abortController: AbortController }) => StorageAdapter
 
 type StorageAdapterCreator<Options> = (
 	options?: Options,
 ) => StorageAdapterCreate
 
 const localStorageAdapter: StorageAdapterCreator<never> = () => {
-	return ({ abortController }: { abortController?: AbortController }) => {
+	return ({ abortController }) => {
 		return {
 			getItem: (key: string) => {
 				try {
@@ -57,9 +55,10 @@ const localStorageAdapter: StorageAdapterCreator<never> = () => {
 						cb(e.key, persistedThemes)
 					},
 					{
-						signal: abortController
-							? AbortSignal.any([abortController.signal, controller.signal])
-							: controller.signal,
+						signal: AbortSignal.any([
+							abortController.signal,
+							controller.signal,
+						]),
 					},
 				)
 
@@ -72,7 +71,7 @@ const localStorageAdapter: StorageAdapterCreator<never> = () => {
 }
 
 const sessionStorageAdapter: StorageAdapterCreator<never> = () => {
-	return ({ abortController }: { abortController?: AbortController }) => {
+	return ({ abortController }) => {
 		return {
 			getItem: (key: string) => {
 				try {
@@ -101,9 +100,10 @@ const sessionStorageAdapter: StorageAdapterCreator<never> = () => {
 						cb(e.key, persistedThemes)
 					},
 					{
-						signal: abortController
-							? AbortSignal.any([abortController.signal, controller.signal])
-							: controller.signal,
+						signal: AbortSignal.any([
+							abortController.signal,
+							controller.signal,
+						]),
 					},
 				)
 
@@ -116,7 +116,7 @@ const sessionStorageAdapter: StorageAdapterCreator<never> = () => {
 }
 
 const memoryStorageAdapter: StorageAdapterCreator<never> = () => {
-	return ({ abortController }: { abortController?: AbortController }) => {
+	return ({ abortController }) => {
 		const storage = new Map<string, object>()
 		const channel = new BroadcastChannel(packageName)
 
@@ -146,9 +146,10 @@ const memoryStorageAdapter: StorageAdapterCreator<never> = () => {
 						cb(e.data.key, e.data.themes)
 					},
 					{
-						signal: abortController
-							? AbortSignal.any([abortController.signal, controller.signal])
-							: controller.signal,
+						signal: AbortSignal.any([
+							abortController.signal,
+							controller.signal,
+						]),
 					},
 				)
 

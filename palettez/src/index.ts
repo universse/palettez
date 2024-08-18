@@ -56,11 +56,6 @@ const isClient = !!(
 	typeof window.document.createElement !== 'undefined'
 )
 
-const DEFAULT_OPTIONS = {
-	key: packageName,
-	storage: localStorageAdapter(),
-}
-
 function getThemeAndOptions(config: ThemeConfig) {
 	return Object.entries(config).reduce<
 		Array<{
@@ -95,8 +90,13 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 	#listeners: Set<Listener<T>> = new Set<Listener<T>>()
 	#abortController = new AbortController()
 
-	constructor(options: ThemeStoreOptions) {
-		const { config } = options
+	constructor({
+		key = packageName,
+		config,
+		initialThemes = {},
+		storage = localStorageAdapter(),
+	}: ThemeStoreOptions) {
+		this.#options = { key, config, initialThemes, storage }
 
 		this.#defaultThemes = Object.fromEntries(
 			Object.entries(config).map(([theme, themeConfig]) => {
@@ -109,20 +109,11 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 			}),
 		) as Themes<T>
 
-		this.#options = {
-			...DEFAULT_OPTIONS,
-			...options,
-			initialThemes: options.initialThemes || {},
-		}
+		this.#currentThemes = { ...this.#defaultThemes, ...initialThemes }
 
 		this.#storage = this.#options.storage({
 			abortController: this.#abortController,
 		})
-
-		this.#currentThemes = {
-			...this.#defaultThemes,
-			...this.#options.initialThemes,
-		}
 
 		this.#resolvedOptionsByTheme = Object.fromEntries(
 			Object.keys(config).map((theme) => [theme, {}]),
@@ -138,29 +129,27 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 	}
 
 	setThemes = async (themes: Partial<Themes<T>>): Promise<void> => {
-		this.#setThemeAndNotify({ ...this.#currentThemes, ...themes })
-
-		// this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
+		this.#setThemesAndNotify({ ...this.#currentThemes, ...themes })
 
 		await this.#storage.setItem(this.#options.key, this.#currentThemes)
+
+		this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
 	}
 
 	restore = async (): Promise<void> => {
 		const persistedThemes = await this.#storage.getItem(this.#options.key)
 
-		this.#setThemeAndNotify(
+		this.#setThemesAndNotify(
 			(persistedThemes as Themes<T>) || this.#defaultThemes,
 		)
-
-		// this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
 	}
 
 	// clear = async (): Promise<void> => {
-	// 	this.#setThemeAndNotify({ ...this.#defaultThemes })
-
-	// 	this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
+	// 	this.#setThemesAndNotify({ ...this.#defaultThemes })
 
 	// 	await this.#storage.removeItem(this.#options.key)
+
+	// 	this.#storage.broadcast?.(this.#options.key, this.#currentThemes)
 	// }
 
 	subscribe = (callback: Listener<T>): (() => void) => {
@@ -185,7 +174,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 		return this.#storage.watch((key, persistedThemes) => {
 			if (key !== this.#options.key) return
 
-			this.#setThemeAndNotify(
+			this.#setThemesAndNotify(
 				(persistedThemes as Themes<T>) || this.#defaultThemes,
 			)
 		})
@@ -197,7 +186,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 		registry.delete(this.#options.key)
 	}
 
-	#setThemeAndNotify = (theme: Themes<T>): void => {
+	#setThemesAndNotify = (theme: Themes<T>): void => {
 		this.#currentThemes = theme
 		const resolvedThemes = this.#resolveThemes()
 		this.#notify(resolvedThemes)
@@ -253,7 +242,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 						: ifNotMatch
 
 					if (this.#currentThemes[theme] === option.key) {
-						this.#setThemeAndNotify({ ...this.#currentThemes })
+						this.#setThemesAndNotify({ ...this.#currentThemes })
 					}
 				},
 				{ signal: this.#abortController.signal },
@@ -275,7 +264,7 @@ const registry = new Map<string, ThemeStore<ThemeConfig>>()
 function createThemeStore<T extends ThemeStoreOptions>(
 	options: T,
 ): ThemeStore<T['config']> {
-	const storeKey = options.key || DEFAULT_OPTIONS.key
+	const storeKey = options.key || packageName
 	if (registry.has(storeKey)) {
 		registry.get(storeKey)!.destroy()
 	}
@@ -287,7 +276,7 @@ function createThemeStore<T extends ThemeStoreOptions>(
 function getThemeStore<T extends ThemeStoreOptions>(
 	key: string,
 ): ThemeStore<T['config']> {
-	const storeKey = key || DEFAULT_OPTIONS.key
+	const storeKey = key || packageName
 	if (!registry.has(storeKey)) {
 		throw new Error(
 			`[${packageName}] Theme store with key '${storeKey}' could not be found. Please run \`createThemeStore\` with key '${storeKey}' first.`,

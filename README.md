@@ -43,7 +43,7 @@ It's recommended to initialize Palettez in a synchronous script to avoid theme f
 <script src="https://cdn.jsdelivr.net/npm/palettez"></script>
 
 <script>
-  ;(() => {
+  ;(async () => {
     const themeStore = window.palettez.createThemeStore({
       config: {
         colorScheme: {
@@ -140,41 +140,43 @@ const themeStore = createThemeStore({
 
   // optional, specify your own storage solution. localStorage is used by default.
   storage: ({ abortController }: { abortController?: AbortController }) => {
-		return {
-			getItem: (key: string) => {
-				try {
-					return JSON.parse(window.localStorage.getItem(key) || 'null')
-				} catch {
-					return null
-				}
-			},
+    return {
+      getItem: (key: string) => {
+        try {
+          return JSON.parse(window.localStorage.getItem(key) || 'null')
+        } catch {
+          return null
+        }
+      },
 
-			setItem: (key: string, value: object) => {
-				window.localStorage.setItem(key, JSON.stringify(value))
-			},
+      setItem: (key: string, value: object) => {
+        window.localStorage.setItem(key, JSON.stringify(value))
+      },
 
-			watch: (cb) => {
-				const controller = new AbortController()
+      watch: (cb) => {
+        const controller = new AbortController()
 
-				window.addEventListener(
-					'storage',
-					(e) => {
-						const persistedThemes = JSON.parse(e.newValue || 'null')
-						cb(e.key, persistedThemes)
-					},
-					{
-						signal: abortController
-							? AbortSignal.any([abortController.signal, controller.signal])
-							: controller.signal,
-					},
-				)
+        window.addEventListener(
+          'storage',
+          (e) => {
+            if (e.storageArea !== localStorage) return
+            const persistedThemes = JSON.parse(e.newValue || 'null')
+            cb(e.key, persistedThemes)
+          },
+          {
+            signal: AbortSignal.any([
+              abortController.signal,
+              controller.signal,
+            ]),
+          },
+        )
 
-				return () => {
-					controller.abort()
-				}
-			},
-		}
-	}
+        return () => {
+          controller.abort()
+        }
+      },
+    }
+  }
 })
 ```
 
@@ -194,6 +196,60 @@ themeStore.getResolvedThemes() // { colorScheme: 'light', contrast: 'standard' }
 themeStore.setThemes({ contrast: 'high' })
 await themeStore.restore() // restore persisted theme selection
 themeStore.sync() // useful for syncing theme selection across tabs and windows
-themeStore.subscribe((themes, resolvedThemes) => { /* ... */ }) // return unsubscribe function
+const unsubscribe = themeStore.subscribe((themes, resolvedThemes) => { /* ... */ })
+themeStore.destroy()
 ```
 
+## React Integration
+
+### Client-only persistence
+
+Ensure that you have initialized Palettez as per instructions under [Basic Usage](#basic-usage). As theme selection is only known on the client, you should only render component with `usePalettez` once the app has mounted.
+
+```tsx
+import * as React from 'react'
+import { usePalettez } from 'palettez/react'
+
+function Component() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+      setMounted(true)
+  }, [])
+
+  return mounted ? <ThemeSelect /> : null
+}
+
+function ThemeSelect() {
+  const { 
+    themesAndOptions,
+    themes,
+    setThemes,
+    
+    getResolvedThemes,
+    restore,
+    sync,
+    subscribe,
+  } = usePalettez(window.palettez.getThemeStore())
+
+  return themesAndOptions.map((theme) => (
+    <div key={theme.key}>
+      <label htmlFor={theme.key}>{theme.label}</label>
+      <select
+        id={theme.key}
+        name={theme.key}
+        onChange={(e) => {
+          setThemes({ [theme.key]: e.target.value })
+        }}
+        value={themes[theme.key]}
+      >
+        {theme.options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.value}
+          </option>
+        ))}
+      </select>
+    </div>
+  ))
+}
+```
