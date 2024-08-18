@@ -14,7 +14,7 @@ export {
 	localStorageAdapter,
 	sessionStorageAdapter,
 	memoryStorageAdapter,
-	getThemeAndOptions,
+	getThemesAndOptions,
 	type ThemeConfig,
 	type ThemeStoreOptions,
 	type ThemeStore,
@@ -56,7 +56,7 @@ const isClient = !!(
 	typeof window.document.createElement !== 'undefined'
 )
 
-function getThemeAndOptions(config: ThemeConfig) {
+function getThemesAndOptions(config: ThemeConfig) {
 	return Object.entries(config).reduce<
 		Array<{
 			key: string

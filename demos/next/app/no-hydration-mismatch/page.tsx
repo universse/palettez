@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import { ThemeSelect } from '../../lib/theme-select'
 import { ThemeStoreProvider } from '../../lib/theme-store-provider'
 import { ThemeWrapper } from '../../lib/theme-wrapper'
@@ -38,7 +38,7 @@ const configsByKey = {
 
 const themeStoreKeys = Object.keys(configsByKey)
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const defaultTheme = {
 	colorScheme: 'light',

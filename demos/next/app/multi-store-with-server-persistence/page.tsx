@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import { createStoresScript } from '../../lib/multi-store-scripts'
 import { ThemeSelect } from '../../lib/sync-theme-select'
 import { ThemeWrapper } from '../../lib/sync-theme-wrapper'
@@ -32,7 +32,7 @@ const config = {
 
 const themeStoreKeys = ['app', 'section1', 'section2']
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const defaultTheme = {
 	colorScheme: 'system',

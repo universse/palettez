@@ -1,5 +1,5 @@
 ---
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import { Page } from './_no-hydration-mismatch'
 import './_style.css'
 
@@ -39,7 +39,7 @@ const configsByKey = {
 
 const themeStoreKeys = Object.keys(configsByKey)
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const defaultTheme = {
 	colorScheme: 'light',

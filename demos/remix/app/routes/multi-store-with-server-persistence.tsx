@@ -10,7 +10,7 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@vercel/remix'
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import palettez from 'palettez/raw?raw'
 import { createStoresScript } from '../multi-store-scripts'
 import { ThemeSelect } from '../sync-theme-select'
@@ -45,7 +45,7 @@ const config = {
 
 const themeStoreKeys = ['app', 'section1', 'section2']
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const defaultTheme = {
 	colorScheme: 'system',

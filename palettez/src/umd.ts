@@ -4,5 +4,5 @@ export {
 	localStorageAdapter,
 	sessionStorageAdapter,
 	memoryStorageAdapter,
-	getThemeAndOptions,
+	getThemesAndOptions,
 } from '.'

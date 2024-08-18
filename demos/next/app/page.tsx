@@ -1,4 +1,4 @@
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import { singleStoreScript } from '../lib/single-store-script'
 import { ThemeSelect } from '../lib/sync-theme-select'
 import { ThemeWrapper } from '../lib/sync-theme-wrapper'
@@ -29,7 +29,7 @@ const config = {
 	},
 }
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const storeKey = 'app'
 

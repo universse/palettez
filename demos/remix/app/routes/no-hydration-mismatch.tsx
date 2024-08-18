@@ -10,7 +10,7 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@vercel/remix'
-import { getThemeAndOptions } from 'palettez'
+import { getThemesAndOptions } from 'palettez'
 import { ThemeSelect } from '../theme-select'
 import { ThemeStoreProvider } from '../theme-store-provider'
 import { ThemeWrapper } from '../theme-wrapper'
@@ -50,7 +50,7 @@ const configsByKey = {
 
 const themeStoreKeys = Object.keys(configsByKey)
 
-const themesAndOptions = getThemeAndOptions(config)
+const themesAndOptions = getThemesAndOptions(config)
 
 const defaultTheme = {
 	colorScheme: 'light',
