@@ -274,7 +274,7 @@ function createThemeStore<T extends ThemeStoreOptions>(
 }
 
 function getThemeStore<T extends ThemeStoreOptions>(
-	key: string,
+	key?: string,
 ): ThemeStore<T['config']> {
 	const storeKey = key || packageName
 	if (!registry.has(storeKey)) {
