@@ -1,35 +1,21 @@
 import { Links, Meta, Scripts } from '@remix-run/react'
-import { getThemesAndOptions } from 'palettez'
+import { type ThemeConfig, getThemesAndOptions } from 'palettez'
 import palettez from 'palettez/raw?raw'
 import { singleStoreScript } from '../single-store-script'
 import { ThemeSelect } from '../sync-theme-select'
 import { ThemeWrapper } from '../sync-theme-wrapper'
 
 const config = {
-	colorScheme: {
-		label: 'Color scheme',
-		options: {
-			system: {
-				value: 'System',
-				isDefault: true,
-				media: {
-					query: '(prefers-color-scheme: dark)',
-					ifMatch: 'dark',
-					ifNotMatch: 'light',
-				},
-			},
-			light: { value: 'Light' },
-			dark: { value: 'Dark' },
+	colorScheme: [
+		{
+			value: 'system',
+			media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
 		},
-	},
-	contrast: {
-		label: 'Contrast',
-		options: {
-			standard: { value: 'Standard', isDefault: true },
-			high: { value: 'High' },
-		},
-	},
-}
+		'light',
+		'dark',
+	],
+	contrast: ['standard', 'high'],
+} as const satisfies ThemeConfig
 
 const themesAndOptions = getThemesAndOptions(config)
 

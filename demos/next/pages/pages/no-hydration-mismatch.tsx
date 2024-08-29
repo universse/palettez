@@ -1,36 +1,22 @@
 import util from 'node:util'
 import bodyParser from 'body-parser'
 import cookie from 'cookie'
-import { getThemesAndOptions } from 'palettez'
+import { type ThemeConfig, getThemesAndOptions } from 'palettez'
 import { ThemeSelect } from '../../lib/theme-select'
 import { ThemeStoreProvider } from '../../lib/theme-store-provider'
 import { ThemeWrapper } from '../../lib/theme-wrapper'
 
 const config = {
-	colorScheme: {
-		label: 'Color scheme',
-		options: {
-			// system: {
-			// 	value: 'System',
-			// 	isDefault: true,
-			// 	media: {
-			// 		query: '(prefers-color-scheme: dark)',
-			// 		ifMatch: 'dark',
-			// 		ifNotMatch: 'light',
-			// 	},
-			// },
-			light: { value: 'Light' },
-			dark: { value: 'Dark' },
-		},
-	},
-	contrast: {
-		label: 'Contrast',
-		options: {
-			standard: { value: 'Standard', isDefault: true },
-			high: { value: 'High' },
-		},
-	},
-}
+	colorScheme: [
+		// {
+		// 	value: 'system',
+		// 	media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
+		// },
+		'light',
+		'dark',
+	],
+	contrast: ['standard', 'high'],
+} as const satisfies ThemeConfig
 
 const configsByKey = {
 	app: config,

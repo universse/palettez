@@ -1,6 +1,6 @@
 {
 	"name": "palettez",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"description": "Palettez",
 	"keywords": ["theming"],
 	"repository": {
@@ -40,12 +40,12 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"size": "pnpm build && size-limit",
-		"test": "vitest"
+		"test": "vitest --reporter=basic --disable-console-intercept"
 	},
 	"devDependencies": {
 		"@size-limit/preset-small-lib": "11.1.4",
-		"@types/react": "18.3.3",
-		"jsdom": "24.1.1",
+		"@types/react": "18.3.4",
+		"jsdom": "25.0.0",
 		"react": "18.3.1",
 		"react-dom": "18.3.1",
 		"size-limit": "11.1.4",

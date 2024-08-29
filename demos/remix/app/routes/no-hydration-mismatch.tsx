@@ -10,37 +10,23 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@vercel/remix'
-import { getThemesAndOptions } from 'palettez'
+import { type ThemeConfig, getThemesAndOptions } from 'palettez'
 import { ThemeSelect } from '../theme-select'
 import { ThemeStoreProvider } from '../theme-store-provider'
 import { ThemeWrapper } from '../theme-wrapper'
 import { getThemeSession2 } from '../theme.server'
 
 const config = {
-	colorScheme: {
-		label: 'Color scheme',
-		options: {
-			// system: {
-			// 	value: 'System',
-			// 	isDefault: true,
-			// 	media: {
-			// 		query: '(prefers-color-scheme: dark)',
-			// 		ifMatch: 'dark',
-			// 		ifNotMatch: 'light',
-			// 	},
-			// },
-			light: { value: 'Light' },
-			dark: { value: 'Dark' },
-		},
-	},
-	contrast: {
-		label: 'Contrast',
-		options: {
-			standard: { value: 'Standard', isDefault: true },
-			high: { value: 'High' },
-		},
-	},
-}
+	colorScheme: [
+		// {
+		// 	value: 'system',
+		// 	media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
+		// },
+		'light',
+		'dark',
+	],
+	contrast: ['standard', 'high'],
+} as const satisfies ThemeConfig
 
 const configsByKey = {
 	app: config,

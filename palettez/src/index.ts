@@ -25,18 +25,22 @@ export {
 type ThemeOption = {
 	value: string
 	isDefault?: boolean
-	media?: { query: string; ifMatch: string; ifNotMatch: string }
+	media?: [string, string, string]
 }
 
-type ThemeConfig = Record<
-	string,
-	{
-		label: string
-		options: Record<string, ThemeOption>
-	}
->
+type ThemeConfig = Record<string, Array<string | ThemeOption>>
 
-type Themes<T extends ThemeConfig> = { [K in keyof T]: keyof T[K]['options'] }
+type KeyedThemeConfig = Record<string, Record<string, ThemeOption>>
+
+type Themes<T extends ThemeConfig> = {
+	[K in keyof T]: T[K] extends Array<infer U>
+		? U extends string
+			? U
+			: U extends { value: string }
+				? U['value']
+				: never
+		: never
+}
 
 type Listener<T extends ThemeConfig> = (
 	updatedThemes: Themes<T>,
@@ -56,31 +60,23 @@ const isClient = !!(
 	typeof window.document.createElement !== 'undefined'
 )
 
-function getThemesAndOptions(config: ThemeConfig) {
-	return Object.entries(config).reduce<
-		Array<{
-			key: string
-			label: string
-			options: Array<{ key: string; value: string }>
-		}>
-	>((acc, [theme, themeConfig]) => {
-		acc.push({
-			key: theme,
-			label: themeConfig.label,
-			options: Object.entries(themeConfig.options).map(
-				([optionKey, { value }]) => ({
-					key: optionKey,
-					value,
-				}),
+function getThemesAndOptions(
+	config: ThemeConfig,
+): Array<[string, Array<string>]> {
+	return Object.entries(config).map(([theme, options]) => {
+		return [
+			theme,
+			options.map((option) =>
+				typeof option === 'string' ? option : option.value,
 			),
-		})
-
-		return acc
-	}, [])
+		]
+	})
 }
 
-class ThemeStore<T extends ThemeStoreOptions['config']> {
-	#options: Required<ThemeStoreOptions>
+class ThemeStore<T extends ThemeConfig> {
+	#options: Required<Omit<ThemeStoreOptions, 'config'>> & {
+		config: KeyedThemeConfig
+	}
 	#storage: StorageAdapter
 
 	#defaultThemes: Themes<T>
@@ -96,16 +92,27 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 		initialThemes = {},
 		storage = localStorageAdapter(),
 	}: ThemeStoreOptions) {
-		this.#options = { key, config, initialThemes, storage }
+		const keyedConfig: KeyedThemeConfig = Object.fromEntries(
+			Object.entries(config).map(([theme, options]) => [
+				theme,
+				Object.fromEntries(
+					options.map((option) => {
+						return typeof option === 'string'
+							? [option, { value: option }]
+							: [option.value, option]
+					}),
+				),
+			]),
+		)
+
+		this.#options = { key, config: keyedConfig, initialThemes, storage }
 
 		this.#defaultThemes = Object.fromEntries(
-			Object.entries(config).map(([theme, themeConfig]) => {
-				const entries = Object.entries(themeConfig.options)
-
+			Object.entries(keyedConfig).map(([theme, themeOptions]) => {
+				const options = Object.values(themeOptions)
 				const defaultOption =
-					entries.find(([, option]) => option.isDefault) || entries[0]
-
-				return [theme, defaultOption![0]]
+					options.find((option) => option.isDefault) || options[0]
+				return [theme, defaultOption!.value]
 			}),
 		) as Themes<T>
 
@@ -116,7 +123,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 		})
 
 		this.#resolvedOptionsByTheme = Object.fromEntries(
-			Object.keys(config).map((theme) => [theme, {}]),
+			Object.keys(keyedConfig).map((theme) => [theme, {}]),
 		)
 	}
 
@@ -195,12 +202,9 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 	#resolveThemes = (): Themes<T> => {
 		return Object.fromEntries(
 			Object.entries(this.#currentThemes).map(([theme, optionKey]) => {
-				const option = this.#options.config[theme]!.options[optionKey]!
+				const option = this.#options.config[theme]![optionKey]!
 
-				const resolved = this.#resolveThemeOption({
-					theme,
-					option: { key: optionKey, ...option },
-				})
+				const resolved = this.#resolveThemeOption({ theme, option })
 
 				return [theme, resolved]
 			}),
@@ -212,36 +216,36 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 		option,
 	}: {
 		theme: string
-		option: ThemeOption & { key: string }
+		option: ThemeOption
 	}): string => {
-		if (!option.media) return option.key
+		if (!option.media) return option.value
 
 		if (!isClient) {
 			console.warn(
 				`[${packageName}] Option with key "media" cannot be resolved in server environment.`,
 			)
-			return option.key
+			return option.value
 		}
 
-		if (!this.#resolvedOptionsByTheme[theme]![option.key]) {
+		if (!this.#resolvedOptionsByTheme[theme]![option.value]) {
 			const {
-				media: { query, ifMatch, ifNotMatch },
+				media: [media, ifMatch, ifNotMatch],
 			} = option
 
-			const mq = window.matchMedia(query)
+			const mq = window.matchMedia(media)
 
-			this.#resolvedOptionsByTheme[theme]![option.key] = mq.matches
+			this.#resolvedOptionsByTheme[theme]![option.value] = mq.matches
 				? ifMatch
 				: ifNotMatch
 
 			mq.addEventListener(
 				'change',
 				(e) => {
-					this.#resolvedOptionsByTheme[theme]![option.key] = e.matches
+					this.#resolvedOptionsByTheme[theme]![option.value] = e.matches
 						? ifMatch
 						: ifNotMatch
 
-					if (this.#currentThemes[theme] === option.key) {
+					if (this.#currentThemes[theme] === option.value) {
 						this.#setThemesAndNotify({ ...this.#currentThemes })
 					}
 				},
@@ -249,7 +253,7 @@ class ThemeStore<T extends ThemeStoreOptions['config']> {
 			)
 		}
 
-		return this.#resolvedOptionsByTheme[theme]![option.key]!
+		return this.#resolvedOptionsByTheme[theme]![option.value]!
 	}
 
 	#notify = (resolvedThemes: Themes<T>): void => {

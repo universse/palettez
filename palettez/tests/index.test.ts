@@ -1,46 +1,47 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createThemeStore, getThemeStore } from '../src'
+import {
+	type ThemeConfig,
+	createThemeStore,
+	getThemeStore,
+	getThemesAndOptions,
+} from '../src'
 
 const mockConfig = {
-	colorScheme: {
-		label: 'Color scheme',
-		options: {
-			system: {
-				value: 'System',
-				isDefault: true,
-				media: {
-					query: '(prefers-color-scheme: dark)',
-					ifMatch: 'dark',
-					ifNotMatch: 'light',
-				},
-			},
-			light: { value: 'Light' },
-			dark: { value: 'Dark' },
+	colorScheme: [
+		{
+			value: 'system',
+			media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
 		},
-	},
-	contrast: {
-		label: 'Contrast',
-		options: {
-			standard: { value: 'Standard', isDefault: true },
-			high: { value: 'High' },
-		},
-	},
-}
+		'light',
+		'dark',
+	],
+	contrast: ['standard', 'high'],
+} as const satisfies ThemeConfig
 
 const mockStorage = {
 	getItem: vi.fn(),
 	setItem: vi.fn(),
 	// removeItem: vi.fn(),
 	watch: vi.fn(),
-} as const
+}
 
 const mockOptions = {
 	key: 'palettez',
 	config: mockConfig,
 	storage: () => mockStorage,
-} as const
+}
+
+describe('getThemesAndOptions', () => {
+	it('should return the themes and options', () => {
+		const themesAndOptions = getThemesAndOptions(mockConfig)
+		expect(themesAndOptions).toEqual([
+			['colorScheme', ['system', 'light', 'dark']],
+			['contrast', ['standard', 'high']],
+		])
+	})
+})
 
 describe('ThemeStore', () => {
 	beforeEach(() => {

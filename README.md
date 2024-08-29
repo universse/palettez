@@ -46,22 +46,14 @@ It's recommended to initialize Palettez in a synchronous script to avoid theme f
   ;(async () => {
     const themeStore = window.palettez.createThemeStore({
       config: {
-        colorScheme: {
-          label: 'Color scheme',
-          options: {
-            system: {
-              value: 'System',
-              isDefault: true,
-              media: {
-                query: '(prefers-color-scheme: dark)',
-                ifMatch: 'dark',
-                ifNotMatch: 'light',
-              },
-            },
-            light: { value: 'Light' },
-            dark: { value: 'Dark' },
+        colorScheme: [
+          {
+            value: 'system',
+            media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
           },
-        },
+          'light',
+          'dark',
+        ],
       },
     })
 
@@ -101,41 +93,26 @@ const themeStore = createThemeStore({
 
   // required, specify theme and options
   config: {
-    colorScheme: {
-      label: 'Color scheme',
-      options: {
-        system: {
-          value: 'System',
-          isDefault: true,
-
-          // only supported client-side
-          media: {
-            query: '(prefers-color-scheme: dark)',
-            ifMatch: 'dark',
-            ifNotMatch: 'light',
-          },
-        },
-       light: { value: 'Light' },
-       dark: { value: 'Dark' },
+    colorScheme: [
+      {
+        value: 'system',
+        media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
       },
-    },
-
-    contrast: {
-      label: 'Contrast',
-      options: {
-        system: {
-          value: 'System',
-          isDefault: true,
-          media: {
-            query: '(prefers-contrast: more) and (forced-colors: none)',
-            ifMatch: 'more',
-            ifNotMatch: 'standard',
-          },
-        },
-        standard: { value: 'Standard' },
-        high: { value: 'High' },
+      'light',
+      'dark',
+    ],
+    contrast: [
+      {
+        value: 'system',
+        media: [
+          '(prefers-contrast: more) and (forced-colors: none)',
+          'high',
+          'standard',
+        ],
       },
-    },
+      'standard',
+      'high',
+    ],
   },
 
   // optional, specify your own storage solution. localStorage is used by default.

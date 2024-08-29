@@ -10,7 +10,7 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@vercel/remix'
-import { getThemesAndOptions } from 'palettez'
+import { type ThemeConfig, getThemesAndOptions } from 'palettez'
 import palettez from 'palettez/raw?raw'
 import { createStoresScript } from '../multi-store-scripts'
 import { ThemeSelect } from '../sync-theme-select'
@@ -18,30 +18,16 @@ import { ThemeWrapper } from '../sync-theme-wrapper'
 import { getThemeSession1 } from '../theme.server'
 
 const config = {
-	colorScheme: {
-		label: 'Color scheme',
-		options: {
-			system: {
-				value: 'System',
-				isDefault: true,
-				media: {
-					query: '(prefers-color-scheme: dark)',
-					ifMatch: 'dark',
-					ifNotMatch: 'light',
-				},
-			},
-			light: { value: 'Light' },
-			dark: { value: 'Dark' },
+	colorScheme: [
+		{
+			value: 'system',
+			media: ['(prefers-color-scheme: dark)', 'dark', 'light'],
 		},
-	},
-	contrast: {
-		label: 'Contrast',
-		options: {
-			standard: { value: 'Standard', isDefault: true },
-			high: { value: 'High' },
-		},
-	},
-}
+		'light',
+		'dark',
+	],
+	contrast: ['standard', 'high'],
+} as const satisfies ThemeConfig
 
 const themeStoreKeys = ['app', 'section1', 'section2']
 

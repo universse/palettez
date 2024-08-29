@@ -7,11 +7,7 @@ export function ThemeSelect({
 	themesAndOptions,
 }: {
 	storeKey: string
-	themesAndOptions: Array<{
-		key: string
-		label: string
-		options: Array<{ key: string; value: string }>
-	}>
+	themesAndOptions: Array<[string, Array<string>]>
 }) {
 	const stores = useThemeStoreContext()
 
@@ -19,21 +15,21 @@ export function ThemeSelect({
 		initOnMount: true,
 	})
 
-	return themesAndOptions.map((theme) => (
-		<div key={theme.key}>
+	return themesAndOptions.map(([theme, options]) => (
+		<div key={theme}>
 			<input type='hidden' name='key' value={storeKey} />
-			<label htmlFor={theme.key}>{theme.label}</label>{' '}
+			<label htmlFor={theme}>{theme}</label>{' '}
 			<select
-				id={theme.key}
-				name={theme.key}
+				id={theme}
+				name={theme}
 				onChange={(e) => {
-					setThemes({ [theme.key]: e.target.value })
+					setThemes({ [theme]: e.target.value })
 				}}
-				value={themes[theme.key]}
+				value={themes[theme]}
 			>
-				{theme.options.map((option) => (
-					<option key={option.key} value={option.key}>
-						{option.value}
+				{options.map((option) => (
+					<option key={option} value={option}>
+						{option}
 					</option>
 				))}
 			</select>
