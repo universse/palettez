@@ -8,27 +8,18 @@ yarn-error.log*
 .pnpm-debug.log
 
 # Builds
-dist
 .astro
-.next
-out
-build
-.cache
+dist
 
 # Cloudflare
-.mf
 .wrangler
 worker-configuration.d.ts
 
 # Typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # Turborepo
 .turbo
-
-# Personal
-ideas.md
 
 # Tooling
 .vscode

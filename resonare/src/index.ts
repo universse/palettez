@@ -26,11 +26,6 @@ export type ThemeStoreConfig = Record<
 	ThemeConfig<string> | ThemeConfig<number> | ThemeConfig<boolean>
 >
 
-// { [themeKey]: { [optionKey]: ThemeOption } }
-type KeyedThemeStoreConfig<T extends ThemeStoreConfig> = {
-	[K in keyof T]: Record<string, ThemeOption>
-}
-
 export type Themes<T extends ThemeStoreConfig> = {
 	[K in keyof T]: T[K] extends { options: ReadonlyArray<infer U> }
 		? U extends ThemeOption
@@ -44,11 +39,6 @@ export type Themes<T extends ThemeStoreConfig> = {
 					: boolean
 			: never
 }
-
-type Listener<T extends ThemeStoreConfig> = (value: {
-	themes: Themes<T>
-	resolvedThemes: Themes<T>
-}) => void
 
 type ThemeKeysWithSystemOption<T extends ThemeStoreConfig> = {
 	[K in keyof T]: T[K] extends { options: ReadonlyArray<infer U> }
@@ -71,16 +61,37 @@ type NonSystemOptionValues<
 			: never
 	: never
 
-type SystemOptions<T extends ThemeStoreConfig> = {
-	[K in ThemeKeysWithSystemOption<T>]?: [
-		NonSystemOptionValues<T, K>,
-		NonSystemOptionValues<T, K>,
-	]
+type ResolvedSystemThemes<T extends ThemeStoreConfig> = {
+	[K in ThemeKeysWithSystemOption<T>]: NonSystemOptionValues<T, K>
 }
+
+type SystemOptions = Record<
+	string,
+	{
+		value: string
+		mediaQuery: string
+		pair: [string, string]
+	}
+>
+
+type Listener<T extends ThemeStoreConfig, O extends boolean = false> = (
+	value: O extends true
+		? {
+				themes: Themes<T>
+				resolvedThemes: Themes<T>
+			}
+		: {
+				themes: Themes<T>
+				resolvedThemes: Themes<T>
+				resolvedSystemThemes: ResolvedSystemThemes<T>
+			},
+) => void
+
+type PersistedSystemOptionPairs = Record<string, [string, string]>
 
 type PersistedState<T extends ThemeStoreConfig> = {
 	themes: Partial<Themes<T>>
-	systemOptions: SystemOptions<T>
+	systemOptions: PersistedSystemOptionPairs
 }
 
 type ThemeStoreOptions<T extends ThemeStoreConfig> = {
@@ -133,9 +144,7 @@ class ThemeStore<T extends ThemeStoreConfig> {
 
 	#currentThemes: Themes<T>
 
-	#keyedConfig: KeyedThemeStoreConfig<T>
-
-	#systemOptions: SystemOptions<T>
+	#systemOptions: SystemOptions = {}
 
 	#storage: StorageAdapter | null
 
@@ -152,31 +161,39 @@ class ThemeStore<T extends ThemeStoreConfig> {
 			storage = localStorageAdapter({ key: PACKAGE_NAME }),
 		}: ThemeStoreOptions<T> = {},
 	) {
-		const systemOptions: Record<string, [ThemeValue, ThemeValue]> = {}
-
 		this.#defaultThemes = getDefaultThemes(config)
 
 		this.#currentThemes = { ...this.#defaultThemes, ...initialState.themes }
 
-		this.#keyedConfig = Object.fromEntries(
-			Object.entries(config).map(([themeKey, themeConfig]) => {
-				const entries = (themeConfig.options || []).map((option) => {
-					if (typeof option === 'object') {
-						if (option.media) {
-							systemOptions[themeKey] = [option.media[1], option.media[2]]
-						}
+		this.#systemOptions = Object.fromEntries(
+			Object.entries(config).flatMap(([themeKey, themeConfig]) => {
+				const systemOption = (themeConfig.options || []).find(
+					(option): option is Required<ThemeOption> =>
+						typeof option === 'object' && !!option.media,
+				)
 
-						return [String(option.value), option]
-					}
+				if (!systemOption) return []
 
-					return [String(option), { value: option }]
-				})
+				const {
+					value,
+					media: [mediaQuery, optionWhenMatched, optionWhenNotMatched],
+				} = systemOption
 
-				return [themeKey, Object.fromEntries(entries)]
+				return [
+					[
+						themeKey,
+						{
+							value,
+							mediaQuery,
+							pair: initialState.systemOptions?.[themeKey] ?? [
+								optionWhenMatched,
+								optionWhenNotMatched,
+							],
+						},
+					],
+				]
 			}),
-		) as KeyedThemeStoreConfig<T>
-
-		this.#systemOptions = { ...systemOptions, ...initialState.systemOptions }
+		)
 
 		this.#storage =
 			storage?.({
@@ -191,14 +208,25 @@ class ThemeStore<T extends ThemeStoreConfig> {
 	getResolvedThemes = (): Themes<T> => {
 		return Object.fromEntries(
 			Object.entries(this.#currentThemes).map(([themeKey, optionKey]) => {
-				const option = this.#keyedConfig[themeKey]?.[optionKey]
+				const systemOption = this.#systemOptions[themeKey]
 
 				return [
 					themeKey,
-					option ? this.#resolveThemeOption({ themeKey, option }) : optionKey,
+					systemOption && optionKey === systemOption.value
+						? this.#resolveSystemOption(themeKey)
+						: optionKey,
 				]
 			}),
 		) as Themes<T>
+	}
+
+	getResolvedSystemThemes = (): ResolvedSystemThemes<T> => {
+		return Object.fromEntries(
+			Object.keys(this.#systemOptions).map((themeKey) => [
+				themeKey,
+				this.#resolveSystemOption(themeKey),
+			]),
+		) as ResolvedSystemThemes<T>
 	}
 
 	setThemes = (
@@ -221,12 +249,9 @@ class ThemeStore<T extends ThemeStoreConfig> {
 
 	updateSystemOption = <K extends ThemeKeysWithSystemOption<T>>(
 		themeKey: K,
-		[ifMatch, ifNotMatch]: [
-			NonSystemOptionValues<T, K>,
-			NonSystemOptionValues<T, K>,
-		],
+		pair: [NonSystemOptionValues<T, K>, NonSystemOptionValues<T, K>],
 	): void => {
-		this.#systemOptions[themeKey] = [ifMatch, ifNotMatch]
+		this.#systemOptions[themeKey]!.pair = pair
 
 		this.setThemes({ ...this.#currentThemes })
 	}
@@ -234,7 +259,12 @@ class ThemeStore<T extends ThemeStoreConfig> {
 	toPersist = (): PersistedState<T> => {
 		return {
 			themes: this.#currentThemes,
-			systemOptions: this.#systemOptions,
+			systemOptions: Object.fromEntries(
+				Object.entries(this.#systemOptions).map(([themeKey, { pair }]) => [
+					themeKey,
+					pair,
+				]),
+			),
 		}
 	}
 
@@ -246,10 +276,7 @@ class ThemeStore<T extends ThemeStoreConfig> {
 			return
 		}
 
-		this.#systemOptions = {
-			...this.#systemOptions,
-			...persistedState.systemOptions,
-		}
+		this.#applyPersistedSystemOptions(persistedState.systemOptions)
 
 		this.#setThemesAndNotify({
 			...this.#defaultThemes,
@@ -260,16 +287,16 @@ class ThemeStore<T extends ThemeStoreConfig> {
 	subscribe = (callback: Listener<T>): (() => void) => {
 		this.#listeners.add(callback)
 
-		return () => {
-			this.#listeners.delete(callback)
-		}
+		return () => this.#listeners.delete(callback)
 	}
 
 	sync = (): (() => void) | undefined => {
 		if (!this.#storage?.watch) return
 
 		return this.#storage.watch((persistedState) => {
-			this.#systemOptions = (persistedState as PersistedState<T>).systemOptions
+			this.#applyPersistedSystemOptions(
+				(persistedState as PersistedState<T>).systemOptions,
+			)
 
 			this.#setThemesAndNotify((persistedState as PersistedState<T>).themes)
 		})
@@ -281,6 +308,16 @@ class ThemeStore<T extends ThemeStoreConfig> {
 		this.#abortController.abort()
 	}
 
+	#applyPersistedSystemOptions = (
+		systemOptions: PersistedSystemOptionPairs = {},
+	): void => {
+		Object.entries(systemOptions).forEach(([themeKey, pair]) => {
+			if (!pair || !this.#systemOptions[themeKey]) return
+
+			this.#systemOptions[themeKey].pair = pair
+		})
+	}
+
 	#setThemesAndNotify = (themes: Themes<T>): void => {
 		this.#currentThemes = themes
 
@@ -288,18 +325,13 @@ class ThemeStore<T extends ThemeStoreConfig> {
 			listener({
 				themes: this.#currentThemes,
 				resolvedThemes: this.getResolvedThemes(),
+				resolvedSystemThemes: this.getResolvedSystemThemes(),
 			})
 		}
 	}
 
-	#resolveThemeOption = ({
-		themeKey,
-		option,
-	}: {
-		themeKey: string
-		option: ThemeOption
-	}): string => {
-		if (!option.media) return option.value
+	#resolveSystemOption = (themeKey: string): string => {
+		const { value, mediaQuery, pair } = this.#systemOptions[themeKey]!
 
 		if (
 			!(
@@ -308,32 +340,22 @@ class ThemeStore<T extends ThemeStoreConfig> {
 				typeof window.document.createElement !== 'undefined'
 			)
 		) {
-			return option.value
+			return value
 		}
 
-		const cache = this.#mediaQueryCache
+		if (!this.#mediaQueryCache[mediaQuery]) {
+			this.#mediaQueryCache[mediaQuery] = window.matchMedia(mediaQuery)
 
-		const [mediaQuery] = option.media
-
-		if (!cache[mediaQuery]) {
-			const mediaQueryList = window.matchMedia(mediaQuery)
-
-			cache[mediaQuery] = mediaQueryList
-
-			mediaQueryList.addEventListener(
+			this.#mediaQueryCache[mediaQuery].addEventListener(
 				'change',
 				() => {
-					if (this.#currentThemes[themeKey] === option.value) {
-						this.#setThemesAndNotify({ ...this.#currentThemes })
-					}
+					this.#setThemesAndNotify({ ...this.#currentThemes })
 				},
 				{ signal: this.#abortController.signal },
 			)
 		}
 
-		const [ifMatch, ifNotMatch] = this.#systemOptions[themeKey]!
-
-		return cache[mediaQuery].matches ? ifMatch : ifNotMatch
+		return this.#mediaQueryCache[mediaQuery].matches ? pair[0] : pair[1]
 	}
 }
 
@@ -348,12 +370,15 @@ export function createThemeStore<T extends ThemeStoreConfig>(
 
 const restoreScript = <T extends ThemeValue>(
 	params: Array<
-		[string, Array<[string, T] | [string, T, T, string, T, T]>, Listener<any>]
+		[
+			string,
+			Array<[string, T] | [string, T, T, string, T, T]>,
+			Listener<any, true>,
+		]
 	>,
 ) => {
 	params.forEach(([key, flattenedConfig, handler]) => {
-		const persistedThemes =
-			JSON.parse(localStorage.getItem(key) || '{}').themes ?? {}
+		const persisted = JSON.parse(localStorage.getItem(key) || '{}')
 
 		handler(
 			flattenedConfig.reduce<{
@@ -367,18 +392,23 @@ const restoreScript = <T extends ThemeValue>(
 						initial,
 						systemOptionValue,
 						mediaQuery,
-						ifMatch,
-						ifNotMatch,
+						optionWhenMatched,
+						optionWhenNotMatched,
 					],
 				) => {
-					const currentValue = persistedThemes[themeKey] ?? initial
+					const currentValue = persisted.themes?.[themeKey] ?? initial
 
 					acc.resolvedThemes[themeKey] = acc.themes[themeKey] = currentValue
 
 					if (currentValue === systemOptionValue) {
+						const pair = persisted.systemOptions?.[themeKey] ?? [
+							optionWhenMatched,
+							optionWhenNotMatched,
+						]
+
 						acc.resolvedThemes[themeKey] = matchMedia(mediaQuery!).matches
-							? ifMatch!
-							: ifNotMatch!
+							? pair[0]
+							: pair[1]
 					}
 
 					return acc
@@ -393,7 +423,7 @@ export type ThemeScriptParameter = {
 	/** `localStorage` key; defaults to the 'resonare'. */
 	key?: string
 	config: ThemeStoreConfig
-	handler: Listener<any>
+	handler: Listener<any, true>
 }
 
 /**
@@ -441,26 +471,16 @@ export function createInlineThemeScript(
 				)
 
 				if (systemOption) {
-					const {
-						value,
-						media: [mediaQuery, ifMatch, ifNotMatch],
-					} = systemOption
+					const { value, media } = systemOption
 
-					return [
-						themeKey,
-						resolvedInitialValue,
-						value,
-						mediaQuery,
-						ifMatch,
-						ifNotMatch,
-					]
+					return [themeKey, resolvedInitialValue, value, ...media]
 				}
 
 				return [themeKey, resolvedInitialValue]
 			},
 		)
 
-		return `['${key}', ${JSON.stringify(flattenedConfig)}, ${handler}]`
+		return `['${key}',${JSON.stringify(flattenedConfig)},${handler}]`
 	})
 
 	return `(${restoreScript})([${serializedArgs}])`

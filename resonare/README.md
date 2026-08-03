@@ -1,6 +1,6 @@
 # Resonare [![Version](https://img.shields.io/npm/v/resonare.svg?labelColor=black&color=blue)](https://www.npmjs.com/package/resonare)
 
- A state store for multi-dimensional themes and user preferences. [Check out the demo](https://resonare.universse.workers.dev).
+ A state store for multi-dimensional themes and user preferences. [Check out the demo](https://resonare.phuoccss.workers.dev).
 
 ## Features
 
@@ -142,6 +142,10 @@ themeStore.getThemes()
 // get resolved theme selection (after media queries)
 // e.g.: { colorScheme: 'dark', contrast: 'standard', sidebarWidth: 240 }
 themeStore.getResolvedThemes()
+
+// get resolved system options
+// e.g.: { colorScheme: 'dark' }
+themeStore.getResolvedSystemThemes()
 
 // update theme
 themeStore.setThemes({ colorScheme: 'light', sidebarWidth: 280 })

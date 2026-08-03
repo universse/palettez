@@ -214,9 +214,43 @@ describe('ThemeStore', () => {
 		expect(mockListener).toHaveBeenNthCalledWith(1, {
 			themes: { colorScheme: 'system', contrast: 'high', sidebar: 200 },
 			resolvedThemes: { colorScheme: 'light', contrast: 'high', sidebar: 200 },
+			resolvedSystemThemes: { colorScheme: 'light' },
 		})
 
 		expect(mockListener).toHaveBeenCalledTimes(1)
+	})
+
+	it('should resolve system option even when it is not selected', () => {
+		setSystemColorScheme('dark')
+
+		const themeStore = createThemeStore(CONFIG, OPTIONS)
+
+		themeStore.setThemes({ colorScheme: 'light' })
+
+		expect(themeStore.getThemes()).toEqual({
+			colorScheme: 'light',
+			contrast: 'standard',
+			sidebar: 200,
+		})
+
+		expect(themeStore.getResolvedThemes()).toEqual({
+			colorScheme: 'light',
+			contrast: 'standard',
+			sidebar: 200,
+		})
+
+		expect(themeStore.getResolvedSystemThemes()).toEqual({
+			colorScheme: 'dark',
+		})
+
+		themeStore.updateSystemOption('colorScheme', [
+			'dark-modern',
+			'light-modern',
+		])
+
+		expect(themeStore.getResolvedSystemThemes()).toEqual({
+			colorScheme: 'dark-modern',
+		})
 	})
 })
 
