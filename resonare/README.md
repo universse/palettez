@@ -1,4 +1,4 @@
-# Resonare [![Version](https://img.shields.io/npm/v/resonare.svg?labelColor=black&color=blue)](https://www.npmjs.com/package/resonare)
+# Resonare [![Version](https://img.shields.io/npm/v/resonare.svg?labelColor=black&color=green)](https://www.npmjs.com/package/resonare) [![bundle size](https://img.shields.io/bundlephobia/minzip/resonare?labelColor=black&color=green)](https://bundlephobia.com/package/resonare)
 
  A state store for multi-dimensional themes and user preferences. [Check out the demo](https://resonare.phuoccss.workers.dev).
 
