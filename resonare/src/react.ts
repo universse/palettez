@@ -15,9 +15,7 @@ import type { ThemeStore, ThemeStoreConfig } from '.'
 export function useResonare<T extends ThemeStoreConfig>(store: ThemeStore<T>) {
 	const {
 		destroy,
-		getResolvedThemes,
-		getResolvedSystemThemes,
-		getThemes,
+		getSnapshot,
 		restore,
 		setThemes,
 		subscribe,
@@ -26,14 +24,14 @@ export function useResonare<T extends ThemeStoreConfig>(store: ThemeStore<T>) {
 		updateSystemOption,
 	} = store
 
-	const themes = React.useSyncExternalStore(subscribe, getThemes, getThemes)
+	const snapshot = React.useSyncExternalStore(
+		subscribe,
+		getSnapshot,
+		getSnapshot,
+	)
 
 	return {
-		themes,
-		// @ts-expect-error - workaround for React compiler as getResolvedThemes is not called again without 'themes' dependency
-		resolvedThemes: getResolvedThemes(themes),
-		// @ts-expect-error - workaround for React compiler as getResolvedSystemThemes is not called again without 'themes' dependency
-		resolvedSystemThemes: getResolvedSystemThemes(themes),
+		...snapshot,
 		destroy,
 		restore,
 		setThemes,

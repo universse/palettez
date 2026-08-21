@@ -1,0 +1,29 @@
+---
+import { ThemeSelect, themeScript } from './_lite'
+import './_style.css'
+---
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta
+      name='viewport'
+      content='width=device-width,initial-scale=1'
+    />
+    <title>Resonare Demo</title>
+    <script is:inline set:html={themeScript} />
+  </head>
+  <body>
+    <main>
+      <h1>resonare/lite</h1>
+      <h2>A state store for adding dark mode</h2>
+      <a
+        href='https://github.com/phuoccss/resonare'
+        rel='noopener noreferrer'
+        target='_blank'
+      >
+        Documentation <span aria-hidden='true'>→</span>
+      </a>
+      <ThemeSelect client:load />
+    </main>
+  </body>
+</html>

@@ -1,15 +1,10 @@
-import { name as PACKAGE_NAME } from '../package.json' with { type: 'json' }
+import { DEFAULT_KEY } from './constants'
 
-/**
- * Pluggable persistence for `createThemeStore`.
- */
 export type StorageAdapter = {
-	get: () => object | null
-	set: (value: object) => void
-	/** Optional: notify other tabs/contexts after local `set` operation. */
-	broadcast?: (value: object) => void
-	/** Optional: subscribes to other tabs/contexts' updates, returns `unsubscribe` function. */
-	watch?: (cb: (value: object) => void) => () => void
+	get: () => string | null
+	set: (value: string) => void
+	broadcast?: (value: string) => void
+	watch?: (cb: (value: string | null) => void) => () => void
 }
 
 export type StorageAdapterCreate = ({
@@ -22,18 +17,6 @@ export type StorageAdapterCreator<Options> = (
 	options: Options,
 ) => StorageAdapterCreate
 
-/**
- * Persists theme store in `localStorage` or `sessionStorage`.
- * @example
- * ```ts
- * import { createThemeStore, localStorageAdapter } from 'resonare'
- *
- * const store = createThemeStore(
- *   { colorMode: { options: ['light', 'dark'] },
- *   { storage: localStorageAdapter({ key: 'app', type: 'localStorage' }) },
- * )
- * ```
- */
 export const localStorageAdapter: StorageAdapterCreator<{
 	key: string
 	type?: 'localStorage' | 'sessionStorage'
@@ -41,11 +24,11 @@ export const localStorageAdapter: StorageAdapterCreator<{
 	return ({ abortController }) => {
 		return {
 			get: () => {
-				return JSON.parse(window[type].getItem(key) || 'null')
+				return window[type].getItem(key)
 			},
 
-			set: (value: object) => {
-				window[type].setItem(key, JSON.stringify(value))
+			set: (value) => {
+				window[type].setItem(key, value)
 			},
 
 			watch: (cb) => {
@@ -58,7 +41,7 @@ export const localStorageAdapter: StorageAdapterCreator<{
 
 						if (e.key !== key) return
 
-						cb(JSON.parse(e.newValue!))
+						cb(e.newValue)
 					},
 					{
 						signal: AbortSignal.any([
@@ -76,36 +59,24 @@ export const localStorageAdapter: StorageAdapterCreator<{
 	}
 }
 
-/**
- * In-memory persistence and sync via `BroadcastChannel`.
- * Useful with server-side persistence.
- * @example
- * ```ts
- * import { createThemeStore, memoryStorageAdapter } from 'resonare'
- *
- * const store = createThemeStore(
- *   { colorMode: { options: ['light', 'dark'] },
- *   { storage: memoryStorageAdapter({ key: 'app' }) },
- * )
- * ```
- */
 export const memoryStorageAdapter: StorageAdapterCreator<{
 	key: string
 }> = ({ key }) => {
 	return ({ abortController }) => {
-		const storage = new Map<string, object>()
-		const channel = new BroadcastChannel(PACKAGE_NAME)
+		const storage = new Map<string, string>()
+
+		const channel = new BroadcastChannel(DEFAULT_KEY)
 
 		return {
 			get: () => {
-				return storage.get(key) || null
+				return storage.get(key) ?? null
 			},
 
-			set: (value: object) => {
+			set: (value) => {
 				storage.set(key, value)
 			},
 
-			broadcast: (value: object) => {
+			broadcast: (value) => {
 				channel.postMessage({ key, value })
 			},
 

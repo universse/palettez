@@ -29,11 +29,11 @@ const PARAM = {
 		},
 		spacing: {
 			options: ['80%', '90%', '100%', '110%', '120%'],
-			initialValue: '100%',
+			defaultValue: '100%',
 		},
 		fontSize: {
 			options: ['80%', '90%', '100%', '110%', '120%'],
-			initialValue: '100%',
+			defaultValue: '100%',
 		},
 	},
 	handler: ({ resolvedThemes }) => {

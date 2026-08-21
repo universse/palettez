@@ -6,6 +6,7 @@ import {
 	getThemesAndOptions,
 	type ThemeStoreConfig,
 } from '../dist'
+import { mockStorage, setSystemColorScheme } from './utils'
 
 const CONFIG = {
 	colorScheme: {
@@ -23,15 +24,8 @@ const CONFIG = {
 	contrast: {
 		options: ['standard', 'high'],
 	},
-	sidebar: { initialValue: 200 },
+	sidebar: { defaultValue: 200 },
 } as const satisfies ThemeStoreConfig
-
-const mockStorage = {
-	get: vi.fn(),
-	set: vi.fn(),
-	del: vi.fn(),
-	watch: vi.fn(),
-}
 
 const OPTIONS = {
 	storage: () => mockStorage,
@@ -83,6 +77,22 @@ describe('ThemeStore', () => {
 			contrast: 'standard',
 			sidebar: 200,
 		})
+
+		expect(themeStore.getSnapshot()).toEqual({
+			themes: {
+				colorScheme: 'system',
+				contrast: 'standard',
+				sidebar: 200,
+			},
+			resolvedThemes: {
+				colorScheme: 'light',
+				contrast: 'standard',
+				sidebar: 200,
+			},
+			resolvedSystemThemes: {
+				colorScheme: 'light',
+			},
+		})
 	})
 
 	it('should set themes', () => {
@@ -100,10 +110,28 @@ describe('ThemeStore', () => {
 			sidebar: 300,
 		})
 
-		expect(mockStorage.set).toHaveBeenCalledWith(themeStore.toPersist())
+		expect(themeStore.getSnapshot()).toEqual({
+			themes: {
+				colorScheme: 'dark',
+				contrast: 'high',
+				sidebar: 300,
+			},
+			resolvedThemes: {
+				colorScheme: 'dark',
+				contrast: 'high',
+				sidebar: 300,
+			},
+			resolvedSystemThemes: {
+				colorScheme: 'light',
+			},
+		})
+
+		expect(mockStorage.set).toHaveBeenCalledWith(
+			JSON.stringify(themeStore.toPersist()),
+		)
 	})
 
-	it('should respond to media query changes', () => {
+	it('should respond to OS preferences', () => {
 		setSystemColorScheme('dark')
 
 		const themeStore = createThemeStore(CONFIG, OPTIONS)
@@ -112,6 +140,22 @@ describe('ThemeStore', () => {
 			colorScheme: 'dark',
 			contrast: 'standard',
 			sidebar: 200,
+		})
+
+		expect(themeStore.getSnapshot()).toEqual({
+			themes: {
+				colorScheme: 'system',
+				contrast: 'standard',
+				sidebar: 200,
+			},
+			resolvedThemes: {
+				colorScheme: 'dark',
+				contrast: 'standard',
+				sidebar: 200,
+			},
+			resolvedSystemThemes: {
+				colorScheme: 'dark',
+			},
 		})
 
 		themeStore.updateSystemOption('colorScheme', [
@@ -125,24 +169,42 @@ describe('ThemeStore', () => {
 			sidebar: 200,
 		})
 
-		expect(mockStorage.set).toHaveBeenCalledWith({
+		expect(themeStore.getSnapshot()).toEqual({
 			themes: {
 				colorScheme: 'system',
 				contrast: 'standard',
 				sidebar: 200,
 			},
-			systemOptions: {
-				colorScheme: ['dark-modern', 'light-modern'],
+			resolvedThemes: {
+				colorScheme: 'dark-modern',
+				contrast: 'standard',
+				sidebar: 200,
+			},
+			resolvedSystemThemes: {
+				colorScheme: 'dark-modern',
 			},
 		})
+
+		expect(mockStorage.set).toHaveBeenCalledWith(
+			JSON.stringify({
+				themes: {
+					colorScheme: 'system',
+					contrast: 'standard',
+					sidebar: 200,
+				},
+				systemOptions: {
+					colorScheme: ['dark-modern', 'light-modern'],
+				},
+			}),
+		)
 	})
 
-	it('should restore from initial state', () => {
+	it('should restore from persisted state', () => {
 		setSystemColorScheme('dark')
 
 		const themeStore = createThemeStore(CONFIG, {
 			...OPTIONS,
-			initialState: {
+			persisted: {
 				themes: {
 					colorScheme: 'system',
 					contrast: 'high',
@@ -170,16 +232,18 @@ describe('ThemeStore', () => {
 	it('should restore from storage', () => {
 		setSystemColorScheme('dark')
 
-		mockStorage.get.mockReturnValue({
-			themes: {
-				colorScheme: 'system',
-				contrast: 'high',
-				sidebar: 300,
-			},
-			systemOptions: {
-				colorScheme: ['dark-modern', 'light-modern'],
-			},
-		})
+		mockStorage.get.mockReturnValue(
+			JSON.stringify({
+				themes: {
+					colorScheme: 'system',
+					contrast: 'high',
+					sidebar: 300,
+				},
+				systemOptions: {
+					colorScheme: ['dark-modern', 'light-modern'],
+				},
+			}),
+		)
 
 		const themeStore = createThemeStore(CONFIG, OPTIONS)
 
@@ -195,6 +259,22 @@ describe('ThemeStore', () => {
 			colorScheme: 'dark-modern',
 			contrast: 'high',
 			sidebar: 300,
+		})
+	})
+
+	it('should do nothing when restoring from empty storage', () => {
+		mockStorage.get.mockReturnValue(null)
+
+		const themeStore = createThemeStore(CONFIG, OPTIONS)
+
+		themeStore.setThemes({ colorScheme: 'light' })
+
+		themeStore.restore()
+
+		expect(themeStore.getThemes()).toEqual({
+			colorScheme: 'light',
+			contrast: 'standard',
+			sidebar: 200,
 		})
 	})
 
@@ -227,18 +307,6 @@ describe('ThemeStore', () => {
 
 		themeStore.setThemes({ colorScheme: 'light' })
 
-		expect(themeStore.getThemes()).toEqual({
-			colorScheme: 'light',
-			contrast: 'standard',
-			sidebar: 200,
-		})
-
-		expect(themeStore.getResolvedThemes()).toEqual({
-			colorScheme: 'light',
-			contrast: 'standard',
-			sidebar: 200,
-		})
-
 		expect(themeStore.getResolvedSystemThemes()).toEqual({
 			colorScheme: 'dark',
 		})
@@ -253,19 +321,3 @@ describe('ThemeStore', () => {
 		})
 	})
 })
-
-function setSystemColorScheme(colorScheme: 'light' | 'dark') {
-	Object.defineProperty(window, 'matchMedia', {
-		writable: true,
-		value: vi.fn().mockImplementation((query) => ({
-			matches: colorScheme === 'dark',
-			media: query,
-			onchange: null,
-			addListener: vi.fn(),
-			removeListener: vi.fn(),
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-			dispatchEvent: vi.fn(),
-		})),
-	})
-}

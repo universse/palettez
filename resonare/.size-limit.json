@@ -2,5 +2,9 @@
 	{
 		"path": "dist/index.js",
 		"limit": "1.4 KB"
+	},
+	{
+		"path": "dist/lite.js",
+		"limit": "0.8 KB"
 	}
 ]

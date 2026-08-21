@@ -14,7 +14,12 @@ const isCI = !!process.env.CI
 
 export default defineConfig([
 	{
-		entry: ['src/index.ts', 'src/react.ts'],
+		entry: {
+			index: 'src/index.ts',
+			react: 'src/react.ts',
+			lite: 'src/lite.ts',
+			'lite-react': 'src/lite-react.ts',
+		},
 		dts: {
 			sourcemap: true,
 		},
@@ -28,7 +33,7 @@ export default defineConfig([
 			}),
 		],
 
-		clean: true,
+		clean: isCI,
 		minify: isCI,
 		define: {
 			DEBUG: isCI ? 'false' : 'true',
