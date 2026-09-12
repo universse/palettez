@@ -14,18 +14,11 @@ const PARAM = {
 		document.documentElement.dataset.theme = resolvedTheme
 		document.documentElement.dataset.system = systemTheme
 
-		document.querySelectorAll('meta[name="theme-color"]').forEach((tag) => {
-			tag.remove()
+		const tags = [...document.querySelectorAll('meta[name="theme-color"]')]
+
+		tags.forEach((tag) => {
+			tag.setAttribute('content', resolvedTheme === 'light' ? '#fff' : '#000')
 		})
-
-		const themeColorMetaTag = document.createElement('meta')
-
-		themeColorMetaTag.setAttribute('name', 'theme-color')
-		themeColorMetaTag.setAttribute(
-			'content',
-			resolvedTheme === 'dark' ? '#000' : '#fff',
-		)
-		document.head.appendChild(themeColorMetaTag)
 	},
 } as const satisfies ThemeScriptParameter
 

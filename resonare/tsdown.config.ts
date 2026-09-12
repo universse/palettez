@@ -1,5 +1,4 @@
-import babel from '@rolldown/plugin-babel'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react'
 import { defineConfig } from 'tsdown'
 
 declare global {
@@ -27,9 +26,9 @@ export default defineConfig([
 		platform: 'neutral',
 		target: 'ES2023',
 		plugins: [
-			react(),
-			babel({
-				presets: [reactCompilerPreset({ target: '18' })],
+			react({
+				compiler: true,
+				exclude: [/\/node_modules\//, /\.d\.ts$/],
 			}),
 		],
 

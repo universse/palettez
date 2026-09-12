@@ -1,6 +1,6 @@
-# Resonare [![Version](https://img.shields.io/npm/v/resonare.svg?labelColor=black&color=green)](https://www.npmjs.com/package/resonare) [![bundle size](https://img.shields.io/bundlephobia/minzip/resonare?labelColor=black&color=green)](https://bundlephobia.com/package/resonare)
+# Resonare [![Version](https://img.shields.io/npm/v/resonare.svg?labelColor=cb0000&color=000)](https://www.npmjs.com/package/resonare) [![bundle size](https://img.shields.io/bundlejs/size/resonare?labelColor=007ec6&color=000)](https://bundlejs.com/?q=resonare)
 
- A state store for multi-dimensional themes and user preferences. [Check out the demo](https://resonare.phuoccss.workers.dev).
+A state store for multi-dimensional themes and user preferences. [Check out the demo](https://resonare.phuoccss.workers.dev).
 
 ## Features
 
@@ -30,6 +30,49 @@ yarn add resonare
 # or
 pnpm add resonare
 ```
+
+## Lite
+
+For light / dark / system only, import from `resonare/lite`. There is no theme config object.
+
+```ts
+import {
+  createInlineThemeScript,
+  createThemeStore,
+  type ThemeScriptParameter
+} from 'resonare/lite'
+
+const PARAM = {
+  key: 'my-app',
+  handler: ({ resolvedTheme, systemTheme }) => {
+    document.documentElement.dataset.theme = resolvedTheme
+    document.documentElement.dataset.system = systemTheme
+
+    const tags = [...document.querySelectorAll('meta[name="theme-color"]')]
+
+    tags.forEach((tag) => {
+      tag.setAttribute('content', resolvedTheme === 'light' ? '#fff' : '#000')
+    })
+  },
+} as const satisfies ThemeScriptParameter
+
+export const themeScript = createInlineThemeScript(PARAM)
+
+const store = createThemeStore()
+
+store.subscribe(PARAM.handler)
+
+store.getTheme() // 'system' | 'light' | 'dark'
+store.getResolvedTheme() // 'light' | 'dark'
+store.getSystemTheme() // 'light' | 'dark'
+store.setTheme('dark')
+
+destroy,
+restore,
+sync,
+```
+
+React: `import { useResonare } from 'resonare/lite/react'`.
 
 ## Basic Usage
 
@@ -119,16 +162,16 @@ const CONFIG = {
       'standard',
       'high',
     ],
-    initialValue: 'standard',
+    defaultValue: 'standard',
   },
   sidebarWidth: {
-    initialValue: 240,
+    defaultValue: 240,
   },
 } as const satisfies ThemeStoreConfig
 
 const themeStore = createThemeStore(CONFIG, {
   // optional, useful for server-side persistence
-  initialState: persistedStateFromDb, // persisted state returned by themeStore.toPersist()
+  persisted: persistedStateFromDb, // persisted state returned by themeStore.toPersist()
 
   // optional, specify your own client storage or null to disable client-side persistence
   // localStorage is used by default
@@ -151,7 +194,7 @@ themeStore.getResolvedSystemThemes()
 themeStore.setThemes({ colorScheme: 'light', sidebarWidth: 280 })
 
 // get state to persist, useful for server-side persistence
-// to restore, pass the returned object to createThemeStore's initialState
+// to restore, pass the returned object to createThemeStore's persisted
 themeStore.toPersist()
 
 // restore persisted state from client-side storage
@@ -263,7 +306,6 @@ export const themeScript = createInlineThemeScript(PARAM)
 
 const themeStore = createThemeStore(PARAM.config)
 
-
 function ThemeSelect() {
   const { themes, setThemes } = useResonare(themeStore)
 
@@ -329,7 +371,7 @@ const CONFIG = {
 export function ThemeSelect({ persistedStateFromDb }) {
   const [themeStore] = React.useState(() =>
     createThemeStore(CONFIG, {
-      initialState: persistedStateFromDb,
+      persisted: persistedStateFromDb,
       // pass null instead if syncing across tabs/windows is not needed
       storage: memoryStorageAdapter({ key: 'resonare' }),
     }),
